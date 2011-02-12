@@ -2,11 +2,11 @@
 -- |
 -- Module:      Data.Pattern.Pattern
 -- License:     BSD3
--- Maintainer:  Reiner Pope <reiner.pope@gmail.com>
+-- Maintainer:  Brent Yorgey <byorgey@cis.upenn.edu>
 -- Stability:   experimental
--- Portability: portable
+-- Portability: non-portable (see .cabal)
 --
--- The main types used.
+-- The main types used in the implementation of first-class patterns.
 -----------------------------------------------------------------------------
 
 
@@ -19,7 +19,7 @@ module Data.Pattern.Base (
   Pat0, Pat1, Pat2, Pat3, Pat4, Pat5,
   -- * Clauses
   Clause,
-  (->>), tryMatch, match,
+  (->>), (<|>), tryMatch, match,
   module Data.Pattern.Base.TypeList,
   module Data.Pattern.Base.Tuple,
  ) where
@@ -36,13 +36,13 @@ import Control.Monad.Trans.Reader
 
 -- | The pattern type. A @Pattern vars a@ is a pattern which matches
 -- against @a@s and binds variables with types given by the type-list
--- @vars@. 
--- 
+-- @vars@.
+--
 -- Although this is the basic type used by patterns, many of
 -- pattern combinators (for instance, 'Data.Pattern.Base.Common.left')
 -- have types better expressed by the type synonyms 'Pat0', 'Pat1',
 -- 'Pat2', etc, 'Pat5', so that nesting of patterns (e.g. @left (tup2
--- var var)@) can be written as function application. 
+-- var var)@) can be written as function application.
 --
 -- Most \"normal\" pattern matchers (in fact, all of the matchers in
 -- "Data.Pattern.Common" except @var@ and @(\/)@) can be conveniently
@@ -57,7 +57,7 @@ type Pat4 b c d e a = forall bs cs ds es. Pattern bs b -> Pattern cs c -> Patter
 type Pat5 b c d e f a = forall bs cs ds es fs. Pattern bs b -> Pattern cs c -> Pattern ds d -> Pattern es e -> Pattern fs f -> Pattern (bs :++: cs :++: ds :++: es :++: fs) a
 
 
--- | Pattern-match clauses. Typically something of the form 
+-- | Pattern-match clauses. Typically something of the form
 --
 -- @pattern '->>' function@
 --
@@ -68,30 +68,6 @@ type Pat5 b c d e f a = forall bs cs ds es fs. Pattern bs b -> Pattern cs c -> P
 newtype Clause a r = Clause { runClause :: ReaderT a Maybe r }
     deriving(Functor,Applicative,Monad,Alternative,MonadPlus)
 
-{-newtype Clause a r = Clause { runClause :: a -> Maybe r }
-
-instance Functor (Clause a) where
-    {-# INLINE fmap #-}
-    fmap = liftM
-
-instance Applicative (Clause a) where
-    {-# INLINE pure #-}
-    pure = return
-    {-# INLINE (<*>) #-}
-    (<*>) = ap
-
-instance Monad (Clause a) where
-    {-# INLINE return #-}
-    return = Clause . return . return
-    {-# INLINE (>>=) #-}
-    (Clause m) >>= k = Clause (\a -> m a >>= (\r -> runClause (k r) a))
-
-instance Alternative (Clause a) where
-    {-# INLINE empty #-}
-    empty = Clause (pure empty)
-    {-# INLINE (<|>) #-}
-    Clause l <|> Clause r = Clause (\a -> l a <|> r a)
--}
 -- (<|>) has infix 3, so we make (->>) infix 4.
 infix 4 ->>
 
@@ -100,10 +76,11 @@ infix 4 ->>
 (Pattern p) ->> k = Clause (ReaderT $ \a -> fmap (\f -> runTuple f k) (p a))
 
 
--- | \"Runs\" a 'Clause'.
+-- | \"Runs\" a 'Clause', by matching it against a value and returning
+--   a result if it matches, or @Nothing@ if the match fails.
 tryMatch :: a -> Clause a r -> Maybe r
 tryMatch = flip (runReaderT.runClause)
 
--- | @match a c = fromJust (tryMatch a c)@
+-- | 'match' satisfies the equation @match a c = fromJust (tryMatch a c)@.
 match :: a -> Clause a r -> r
 match = (fmap.fmap) (maybe (error "match") id) tryMatch
