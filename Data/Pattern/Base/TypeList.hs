@@ -23,8 +23,8 @@ infixr :++:
 
 -- | Concatenation of lists. Instances:
 --
--- @ type instance Nil     :++: xs = xs
--- type instance (h:*:t) :++: xs = h :*: (t :++: xs)@
+-- > type instance Nil     :++: xs = xs
+-- > type instance (h:*:t) :++: xs = h :*: (t :++: xs)
 type family (:++:) a b
 type instance Nil     :++: xs = xs
 type instance (h:*:t) :++: xs = h :*: (t :++: xs)
