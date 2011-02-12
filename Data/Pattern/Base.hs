@@ -83,4 +83,4 @@ tryMatch = flip (runReaderT.runClause)
 
 -- | 'match' satisfies the equation @match a c = fromJust (tryMatch a c)@.
 match :: a -> Clause a r -> r
-match = (fmap.fmap) (maybe (error "match") id) tryMatch
+match = (fmap.fmap) (maybe (error "failed match") id) tryMatch
