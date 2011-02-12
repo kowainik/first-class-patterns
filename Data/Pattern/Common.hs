@@ -29,7 +29,7 @@ module Data.Pattern.Common (
   -- * @Either@ patterns
   left, right,
   -- * List patterns
-  nil, cons
+  nil, cons, filterp
  ) where
 
 import Data.Pattern.Base
@@ -144,8 +144,8 @@ cons = mk2 (\l -> case l of { (x:xs) -> Just (x,xs); _ -> Nothing })
 -- | Matches lists which contain an element matching the given pattern.
 --   (Note, to simply check whether a list contains a given element, you can use
 --   @is (x `elem`)@.)
--- filterp :: Pattern vs a -> Pattern (Map [] vs) [a]
--- filterp (Pattern p) = Pattern $ \xs -> catMaybes (map p xs)
+filterp :: Distribute vs => Pattern vs a -> Pattern (Map [] vs) [a]
+filterp (Pattern p) = Pattern $ \xs -> Just (distribute (catMaybes (map p xs)))
 
 -- | \"0-tuple pattern\". A strict match on the @()@.
 tup0 :: Pat0 ()
