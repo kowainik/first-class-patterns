@@ -24,10 +24,12 @@ module Data.Pattern.Common (
   mk0, mk1, mk2, mk3, mk4, mk5,
   -- * Tuple patterns
   tup0, tup1, tup2, tup3, tup4, tup5,
+  -- * @Maybe@ patterns
+  nothing, just,
   -- * @Either@ patterns
   left, right,
   -- * List patterns
-  nil, cons,
+  nil, cons
  ) where
 
 import Data.Pattern.Base
@@ -121,11 +123,13 @@ left = mk1 (either Just (const Nothing))
 right :: Pat1 b (Either a b)
 right = mk1 (either (const Nothing) Just)
 
-mk2 :: (a -> Maybe (b,c)) -> Pat2 b c a
-mk2 g b c = mk1 g (tup2 b c)
+-- | Matches @Nothing@.
+nothing :: Pat0 (Maybe a)
+nothing = is isNothing
 
-mk3 :: (a -> Maybe (b,c,d)) -> Pat3 b c d a
-mk3 g b c d = mk1 g (tup3 b c d)
+-- | Matches @Just@.
+just :: Pat1 a (Maybe a)
+just = mk1 id
 
 -- | Matches the empty list.
 nil :: Pat0 [a]
