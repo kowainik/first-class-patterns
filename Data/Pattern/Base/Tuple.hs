@@ -19,6 +19,8 @@ module Data.Pattern.Base.Tuple (
   one,
   (<>),
   runTuple,
+  -- * Mapping and distributing over tuples
+  Map, Distribute(..)
  ) where
 
 import Data.Pattern.Base.TypeList
@@ -52,3 +54,15 @@ one a = Tuple (mkOneD (\(Tuple' t) -> Tuple' (\k -> t (k a))))
 runTuple :: Tuple xs -> Fun xs r -> r
 runTuple (Tuple t) = runTuple' (evalD (Tuple' id) t)
 
+type family Map f xs
+type instance Map f Nil     = Nil
+type instance Map f (h:*:t) = f h :*: Map f t
+
+class Distribute xs where
+  distribute :: Functor f => f (Tuple xs) -> Tuple (Map f xs)
+
+instance Distribute Nil where
+  distribute _ = zero
+
+instance Distribute t => Distribute (h :*: t) where
+  distribute f = undefined  -- XXX

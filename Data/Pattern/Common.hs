@@ -139,14 +139,13 @@ nil = is null
 cons :: Pat2 a [a] [a]
 cons = mk2 (\l -> case l of { (x:xs) -> Just (x,xs); _ -> Nothing })
 
-{-
 -- XXX generalize this to traversable and so on (?)
+-- XXX fix description
 -- | Matches lists which contain an element matching the given pattern.
 --   (Note, to simply check whether a list contains a given element, you can use
---   @is (x `elem`)@.
-has :: Pat1 a [a]
-has = mk1 (\l -> find
--}
+--   @is (x `elem`)@.)
+-- filterp :: Pattern vs a -> Pattern (Map [] vs) [a]
+-- filterp (Pattern p) = Pattern $ \xs -> catMaybes (map p xs)
 
 -- | \"0-tuple pattern\". A strict match on the @()@.
 tup0 :: Pat0 ()
