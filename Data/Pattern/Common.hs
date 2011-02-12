@@ -12,7 +12,7 @@
 
 module Data.Pattern.Common (
   -- * Basic patterns
-  var, __, (/\), (\/), view, tryView,
+  var, __, failp, (/\), (\/), view, tryView,
   -- * Non-binding patterns
   is, cst,
   -- * Anonymous matching
@@ -43,7 +43,12 @@ var = Pattern (Just . one)
 __ :: Pat0 a
 __ = is (const True)
 
--- | \"And patterns\". Succeeds only if both patterns succeed.
+-- | Failure pattern: never succeeds.
+failp :: Pat0 a
+failp = is (const False)
+
+-- | Conjunctive (and) pattern: matches a value against two patterns,
+--   and succeeds only if both succeed, binding variables from both.
 --
 -- @(/\\) = 'mk2' (\a -> (a,a))@
 (/\) :: Pat2 a a a
