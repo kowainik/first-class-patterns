@@ -10,7 +10,6 @@
 -- on type-lists.
 -----------------------------------------------------------------------------
 
-
 module Data.Pattern.Base.Tuple (
   -- * Functions
   Fun,
@@ -26,7 +25,7 @@ import Data.Pattern.Base.TypeList
 import Data.Pattern.Base.Difference
 
 -- | Curried functions. We have
--- 
+--
 -- @Fun (x1 :*: x2 :*: ... :*: xn :*: Nil) r ~ x1 -> x2 -> ... -> xn -> r@
 type family   Fun xs r
 type instance Fun Nil     r = r
