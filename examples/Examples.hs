@@ -6,7 +6,7 @@ import Data.Pattern
 
 --- Basic pattern matching syntax
 ex1, ex2 :: Either Int (Int, Int) -> Int
-ex1 a = match a $ 
+ex1 a = match a $
           left (cst 4)         ->> 0
       <|> left var             ->> id
       <|> right (tup2 var var) ->> (+)
@@ -45,12 +45,12 @@ ex4 a = match a $
        <|> left (tup2 __ var) ->> id
 
 --ex4' :: Either (Int,Int) Int -> Int
---ex4' a = match a $ 
-            
+--ex4' a = match a $
+
 
 -- Applicative:  do 2 pattern matches on the same data, and combine them with function application. (<*>).
 ex5 :: (Int,Int) -> Int
-ex5 a = match a $ 
+ex5 a = match a $
             (tup2 (cst 4) __ ->> (3*) <|> tup2 var __ ->> (*)) <*> (tup2 __ var ->> id)
 
 -- ex5 is semantically the same as ex5'.
@@ -79,3 +79,5 @@ ex8 :: IO ()
 ex8 = mmatch getLine $
         cst "" ->> return ()
     <|> var       ->> putStrLn . ("You said " ++)
+
+ex9 = match 3 $ zero ->> "z" <|> suc (suc var) ->> show
