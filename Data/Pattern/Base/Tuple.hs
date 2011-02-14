@@ -2,9 +2,9 @@
 -- |
 -- Module:      Data.Pattern.Base.Tuple
 -- License:     BSD3
--- Maintainer:  Reiner Pope <reiner.pope@gmail.com>
+-- Maintainer:  Brent Yorgey <byorgey@cis.upenn.edu>
 -- Stability:   experimental
--- Portability: portable
+-- Portability: non-portable (see .cabal)
 --
 -- Various types defined inductively as type families or data families
 -- on type-lists.

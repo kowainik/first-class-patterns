@@ -4,7 +4,7 @@
 -- License:     BSD3
 -- Maintainer:  Brent Yorgey <byorgey@cis.upenn.edu>
 -- Stability:   experimental
--- Portability: non-portable
+-- Portability: non-portable (see .cabal)
 --
 -- The main module for first-class-patterns; to use the library it
 -- should suffice to import this module.  For a quick start using the

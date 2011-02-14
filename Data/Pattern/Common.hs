@@ -2,9 +2,9 @@
 -- |
 -- Module:      Data.Pattern.Common
 -- License:     BSD3
--- Maintainer:  Reiner Pope <reiner.pope@gmail.com>
+-- Maintainer:  Brent Yorgey <byorgey@cis.upenn.edu>
 -- Stability:   experimental
--- Portability: portable
+-- Portability: non-portable (see .cabal)
 --
 -- Common pattern combinators.
 -----------------------------------------------------------------------------

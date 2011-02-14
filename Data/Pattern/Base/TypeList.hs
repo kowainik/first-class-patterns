@@ -2,9 +2,9 @@
 -- |
 -- Module:      Data.Pattern.Base.TypeList
 -- License:     BSD3
--- Maintainer:  Reiner Pope <reiner.pope@gmail.com>
+-- Maintainer:  Brent Yorgey <byorgey@cis.upenn.edu>
 -- Stability:   experimental
--- Portability: portable
+-- Portability: non-portable (see .cabal)
 --
 -- Type-level lists. These lists only describe the types, but contain
 -- no data. That is, they are phantom types.

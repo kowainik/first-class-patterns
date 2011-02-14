@@ -2,9 +2,9 @@
 -- |
 -- Module:      Data.Pattern.TypeList.Difference
 -- License:     BSD3
--- Maintainer:  Reiner Pope <reiner.pope@gmail.com>
+-- Maintainer:  Brent Yorgey <byorgey@cis.upenn.edu>
 -- Stability:   experimental
--- Portability: portable
+-- Portability: non-portable (see .cabal)
 --
 -- \"Difference list converters\". Developed in <http://reinerp.wordpress.com/2009/07/18/difference-type-list/>
 -----------------------------------------------------------------------------
