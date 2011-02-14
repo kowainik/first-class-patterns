@@ -3,6 +3,7 @@ Version:             0.3.0
 Author:              Reiner Pope, Brent Yorgey
 Maintainer:          Brent Yorgey <byorgey@cis.upenn.edu>
 License:             BSD3
+License-file:        LICENSE
 Synopsis:            First class patterns and pattern matching, using type families
 Description:
 
