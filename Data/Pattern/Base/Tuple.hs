@@ -15,8 +15,8 @@ module Data.Pattern.Base.Tuple (
   Fun,
   -- * Tuples
   Tuple,
-  zero,
-  one,
+  zeroT,
+  oneT,
   (<>),
   runTuple,
   -- * Mapping and distributing over tuples
@@ -52,22 +52,22 @@ newtype Tuple' xs = Tuple' { runTuple' :: forall r. Fun xs r -> r }
 newtype Tuple xs = Tuple (D Tuple' xs)
 
 -- | The empty tuple
-zero :: Tuple Nil
-zero = Tuple zeroD
+zeroT :: Tuple Nil
+zeroT = Tuple zeroD
 
 -- | The singleton tuple
-one :: a -> Tuple (a :*: Nil)
-one a = Tuple (mkOneD (\(Tuple' t) -> Tuple' (\k -> t (k a))))
+oneT :: a -> Tuple (a :*: Nil)
+oneT a = Tuple (mkOneD (\(Tuple' t) -> Tuple' (\k -> t (k a))))
 
 -- XXX somehow derive this from a general 'TypeList' class?  and also Uncurriable?
 class Tupable xs where
   mkTuple :: Tup xs -> Tuple xs
 
 instance Tupable Nil where
-  mkTuple Unit = zero
+  mkTuple Unit = zeroT
 
 instance Tupable t => Tupable (h :*: t) where
-  mkTuple (Pair h t) = one h <> mkTuple t
+  mkTuple (Pair h t) = oneT h <> mkTuple t
 
 -- | Concatenation of tuples.
 (<>) :: Tuple xs -> Tuple ys -> Tuple (xs :++: ys)
@@ -99,8 +99,8 @@ class Distribute xs where
   distribute :: Functor f => f (Tuple xs) -> Tuple (Map f xs)
 
 instance Distribute Nil where
-  distribute _ = zero
+  distribute _ = zeroT
 
 instance (Uncurriable t, Tupable t, Distribute t) => Distribute (h :*: t) where
 --  distribute :: f (Tuple (h :*: t)) -> Tuple (f h :*: Map f t)
-  distribute f = one (fmap tupleHead f) <> distribute (fmap tupleTail f)
+  distribute f = oneT (fmap tupleHead f) <> distribute (fmap tupleTail f)

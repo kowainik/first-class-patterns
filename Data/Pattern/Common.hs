@@ -43,7 +43,7 @@ import Data.Maybe
 
 -- | Variable pattern: always succeeds, and binds the value to a variable.
 var :: Pattern (a :*: Nil) a
-var = Pattern (Just . one)
+var = Pattern (Just . oneT)
 
 -- | Wildcard pattern: always succeeds. (This is written as two underscores.)
 __ :: Pat0 a
@@ -176,7 +176,7 @@ tup5 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) (Pattern pe) =
 
 
 mk0 :: (a -> Maybe ()) -> Pat0 a
-mk0 g = Pattern (fmap (const zero) . g)
+mk0 g = Pattern (fmap (const zeroT) . g)
 
 mk1 :: (a -> Maybe b) -> Pat1 b a
 mk1 g (Pattern p) = Pattern (\a -> g a >>= p)
