@@ -36,6 +36,8 @@ import Data.Pattern.Base
 
 import Control.Applicative
 import Control.Monad
+import qualified Data.Foldable as F
+import qualified Data.Traversable as T
 
 import Data.Maybe
 
@@ -139,13 +141,49 @@ nil = is null
 cons :: Pat2 a [a] [a]
 cons = mk2 (\l -> case l of { (x:xs) -> Just (x,xs); _ -> Nothing })
 
--- XXX generalize this to traversable and so on (?)
--- XXX fix description
--- | Matches lists which contain an element matching the given pattern.
---   (Note, to simply check whether a list contains a given element, you can use
---   @is (x `elem`)@.)
-filterp :: Distribute vs => Pattern vs a -> Pattern (Map [] vs) [a]
-filterp (Pattern p) = Pattern $ \xs -> Just (distribute (catMaybes (map p xs)))
+
+-- XXX use (Tup vs :*: Nil) or something like that instead of (Map [] vs)?
+
+-- | @pfilter p@ matches every element of a 'F.Foldable' data structure
+--   against the pattern @p@, discarding elements that do not match.
+--   From the matching elements, binds a list of values corresponding
+--   to each pattern variable.
+--
+--   For example, XXX
+--
+pfilter :: (Distribute vs, F.Foldable t) => Pattern vs a -> Pattern (Map [] vs) (t a)
+pfilter (Pattern p) = Pattern $ Just . distribute . catMaybes . map p . F.toList
+
+-- | @pmap p@ matches every element of a 'T.Traversable' data
+--   structure against the pattern @p@.  The entire match fails if any
+--   of the elements fail to match @p@.  If all the elements match,
+--   binds a @t@-structure full of bound values corresponding to each
+--   variable bound in @p@.
+--
+--   For example, XXX
+pmap :: (Distribute vs, T.Traversable t) => Pattern vs a -> Pattern (Map t vs) (t a)
+pmap (Pattern p) = Pattern $ fmap distribute . T.traverse p
+
+-- | @pfoldr p f b@ matches every element of a 'F.Foldable' data
+--   structure against the pattern @p@, discarding elements that do
+--   not match.  Folds over the bindings produced by the matching
+--   elements to produce a summary value.
+--
+--   For example,
+--
+--   The same functionality could be achieved by matching with
+--   @pfilter p@ and then appropriately combining and folding the
+--   resulting lists of bound values.  In particular, if @p@ binds
+--   only one value we have
+--
+-- > match t (pfoldr p f b ->> id) === match t (pfilter p ->> foldr f b)
+--
+--   However, when @p@ binds more than one value, it can be convenient
+--   to be able to process the bindings from each match together,
+--   rather than having to deal with them once they are separated out
+--   into separate lists.
+pfoldr :: (F.Foldable t, Functor t) => Pattern vs a -> (Fun vs (b -> b)) -> b -> Pattern (b :*: Nil) (t a)
+pfoldr (Pattern p) f b = Pattern $ Just . oneT . foldr (flip runTuple f) b . catMaybes . F.toList . fmap p
 
 -- | \"0-tuple pattern\". A strict match on the @()@.
 tup0 :: Pat0 ()
