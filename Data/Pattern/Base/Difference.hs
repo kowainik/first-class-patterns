@@ -46,15 +46,15 @@ instance Difference GadtD where
     {-# INLINE zeroD #-}
     zeroD = GadtD id
     {-# INLINE plusD #-}
-    plusD (GadtD fx :: GadtD t xs) (GadtD fy :: GadtD t ys) = 
+    plusD (GadtD fx :: GadtD t xs) (GadtD fy :: GadtD t ys) =
         case closure (proxy :: Proxy xs) (proxy :: Proxy ys) of
-          ListD -> GadtD (\(zs :: t zs) -> 
+          ListD -> GadtD (\(zs :: t zs) ->
             case assoc (proxy :: Proxy xs) (proxy :: Proxy ys) (proxy :: Proxy zs) of
               Equal -> fx (fy zs))
     {-# INLINE mkOneD #-}
     mkOneD f = GadtD f
     {-# INLINE evalD #-}
-    evalD nil (GadtD f :: GadtD t xs) = 
+    evalD nil (GadtD f :: GadtD t xs) =
         case rightIdent (proxy :: Proxy xs) of
           Equal -> f nil
 
@@ -78,7 +78,7 @@ instance List Nil where
     assoc _ _ _  = Equal
     {-# INLINE rightIdent #-}
     rightIdent _ = Equal
-    
+
 instance List t => List (h :*: t) where
     {-# INLINE closure #-}
     closure _ b  = case closure (proxy :: Proxy t) b of
@@ -101,12 +101,12 @@ newtype CoerceD t xs = CoerceD (forall ys. t ys -> t (xs :++: ys))
 
 instance Difference CoerceD where
     zeroD = CoerceD id
-    plusD (CoerceD fx :: CoerceD t xs) (CoerceD fy :: CoerceD t ys) = 
-        CoerceD (\(zs :: t zs) -> 
+    plusD (CoerceD fx :: CoerceD t xs) (CoerceD fy :: CoerceD t ys) =
+        CoerceD (\(zs :: t zs) ->
             case assoc2 (proxy :: Proxy xs) (proxy :: Proxy ys) (proxy :: Proxy zs) of
               Equal -> fx (fy zs))
     mkOneD f = CoerceD f
-    evalD nil (CoerceD f :: CoerceD t xs) = 
+    evalD nil (CoerceD f :: CoerceD t xs) =
         case rightIdent2 (proxy :: Proxy xs) of
           Equal -> f nil
 
