@@ -6,30 +6,42 @@
 -- Stability:   experimental
 -- Portability: non-portable (see .cabal)
 --
--- Common pattern combinators.
+-- A collection of useful pattern combinators.
 -----------------------------------------------------------------------------
 
-
 module Data.Pattern.Common (
-  -- * Basic patterns
-  var, __, failp, (/\), (\/), view, tryView,
-  -- * Non-binding patterns
-  is, cst,
-  -- * Anonymous matching
+
+  -- * Pattern combinators
+  -- ** Basic patterns
+  var, give, (/\), (\/), view, tryView,
+  -- ** Non-binding patterns
+  is, cst, __, pfail,
+  -- ** Computational patterns
+  pfilter, pmap, pfoldr,
+
+  -- * Running matches
+  -- ** Anonymous matching
   elim,
-  -- * Monadic matching
+  -- ** Monadic matching
   mmatch,
-  -- * Smart constructors for patterns
+
+  -- * Provided patterns
+  -- ** Tuple patterns
+  tup0, tup1, tup2, pair, tup3, tup4, tup5,
+  -- ** @Maybe@ patterns
+  nothing, just,
+  -- ** @Either@ patterns
+  left, right,
+  -- ** List patterns
+  nil, cons,
+  -- ** Numeric patterns
+  zero, suc,
+
+  -- * Building your own patterns
+  -- ** Smart constructors for patterns
   -- | Build patterns from a selector function.
   mk0, mk1, mk2, mk3, mk4, mk5,
-  -- * Tuple patterns
-  tup0, tup1, tup2, tup3, tup4, tup5,
-  -- * @Maybe@ patterns
-  nothing, just,
-  -- * @Either@ patterns
-  left, right,
-  -- * List patterns
-  nil, cons, filterp
+
  ) where
 
 import Data.Pattern.Base
@@ -47,13 +59,22 @@ import Data.Maybe
 var :: Pattern (a :*: Nil) a
 var = Pattern (Just . oneT)
 
--- | Wildcard pattern: always succeeds. (This is written as two underscores.)
+-- | Wildcard pattern: always succeeds, binding no variables. (This is
+--   written as two underscores.)
 __ :: Pat0 a
 __ = is (const True)
 
+-- | @give b@ always succeeds, ignoring the matched value and
+--   providing the value @b@ instead.  Useful in conjunction with
+--   @(/\\)@ for providing default values in cases that would otherwise
+--   not bind any values.
+give :: b -> Pattern (b :*: Nil) a
+give b = Pattern (const (Just $ oneT b))
+
 -- | Failure pattern: never succeeds.
-failp :: Pat0 a
-failp = is (const False)
+pfail :: Pat0 a
+pfail = is (const False)
+
 
 -- | Conjunctive (and) pattern: matches a value against two patterns,
 --   and succeeds only if both succeed, binding variables from both.
@@ -74,7 +95,7 @@ view f = mk1 (Just . f)
 
 -- | Partial view pattern: do some (possibly failing) computation,
 --   then pattern match on the result if the computation is successful.
---   Note that 'tryView' is a synonym for 'mk1'.
+--   (Note that 'tryView' is a synonym for 'mk1'.)
 tryView :: (a -> Maybe b) -> Pat1 b a
 tryView = mk1
 
@@ -100,44 +121,48 @@ elim = flip match
 mmatch :: (Monad m) => m a -> Clause a (m b) -> m b
 mmatch m p = m >>= elim p
 
--- | \"Predicate pattern\". 'mk0' but with 'Bool' instead of @'Maybe' ()@.
--- Succeeds if function yields 'True', fails otherwise.
+-- | Predicate pattern. Succeeds if the given predicate yields 'True',
+--   fails otherwise.
 --
--- Can be used with @('/\')@ for some uses similar to pattern guards:
+--   Can be used with @('/\')@ for some uses similar to pattern guards:
 --
--- @match a $
---      left (var /\\ is even) ->> id
---  ||| left __               ->> const 0
---  ||| right __              ->> const 1@
+-- > match a $
+-- >      left (var /\ is even) ->> id
+-- >  <|> left  __              ->> const 0
+-- >  <|> right __              ->> const 1
+--
+-- Note that 'is' is like 'mk0' but with 'Bool' instead of @'Maybe'
+-- ()@.
 is :: (a -> Bool) -> Pat0 a
 is g = mk0 (\a -> if g a then Just () else Nothing)
 
--- | \"Constant patterns\": tests for equality to the given constant.
--- @cst x = is (==x)@
+-- | Constant pattern: test for equality to the given constant.
+--
+--   @cst x = is (==x)@.
 cst :: (Eq a) => a -> Pat0 a
 cst x = is (==x)
 
--- | Matches the 'Left' of an 'Either'.
+-- | Match the 'Left' constructor of 'Either'.
 left :: Pat1 a (Either a b)
 left = mk1 (either Just (const Nothing))
 
--- | Matches the 'Right' of an 'Either'.
+-- | Match the 'Right' constructor of 'Either'.
 right :: Pat1 b (Either a b)
 right = mk1 (either (const Nothing) Just)
 
--- | Matches @Nothing@.
+-- | Match the 'Nothing' constructor of 'Maybe'.
 nothing :: Pat0 (Maybe a)
 nothing = is isNothing
 
--- | Matches @Just@.
+-- | Match the 'Just' constructor of 'Maybe'.
 just :: Pat1 a (Maybe a)
 just = mk1 id
 
--- | Matches the empty list.
+-- | Match the empty list.
 nil :: Pat0 [a]
 nil = is null
 
--- | Matches a cons.
+-- | Match a cons.
 cons :: Pat2 a [a] [a]
 cons = mk2 (\l -> case l of { (x:xs) -> Just (x,xs); _ -> Nothing })
 
@@ -197,6 +222,10 @@ tup1 = mk1 Just
 tup2 :: Pat2 a b (a,b)
 tup2 (Pattern pa) (Pattern pb) = Pattern (\(a,b) -> (<>) <$> pa a <*> pb b)
 
+-- | Convenient synonym for 'tup2'.
+pair :: Pat2 a b (a,b)
+pair = tup2
+
 -- | \"3-tuple pattern\"
 tup3 :: Pat3 a b c (a,b,c)
 tup3 (Pattern pa) (Pattern pb) (Pattern pc) =
@@ -230,3 +259,37 @@ mk4 g b c d e = mk1 g (tup4 b c d e)
 
 mk5 :: (a -> Maybe (b,c,d,e,f)) -> Pat5 b c d e f a
 mk5 g b c d e f = mk1 g (tup5 b c d e f)
+
+
+zero :: (Integral a, Eq a) => Pat0 a
+zero = cst 0
+
+suc :: (Integral a, Eq a) => Pat1 a a
+suc = mk1 (\n -> if (n <= 0) then Nothing else Just (n-1))
+
+
+-- XXX better names? and export
+twice :: (Integral a, Eq a) => Pat1 a a
+twice = mk1 (\n -> if even n then Just (n `div` 2) else Nothing)
+
+succtwice :: (Integral a, Eq a) => Pat1 a a
+succtwice = mk1 (\n -> if odd n then Just (n `div` 2) else Nothing)
+
+
+-- XXX de Bruijn references for nonlinear patterns?
+{-
+data Ref :: * -> * -> *
+  RZero :: Ref (h :*: t) h
+  RSucc :: Ref t a -> Ref (h :*: t) a
+
+-- Can't implement this with the current definition of Pattern --
+-- there is no way to access previously matched values.  Plus the type
+-- will be a problem: can't infer the type xs that the reference is
+-- indexing into, since the reference itself doesn't bind any
+-- variables.
+--
+-- Essentially what it boils down to is that this pattern is rather
+-- non-compositional. =(
+ref :: Ref xs a -> Pattern Nil a
+ref = undefined
+-}
