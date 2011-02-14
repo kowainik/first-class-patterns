@@ -49,6 +49,7 @@ import Control.Monad.Trans.Reader
 -- defined using @mk0@, @mk1@, etc, @mk5@.
 newtype Pattern vars a = Pattern { runPattern :: a -> Maybe (Tuple vars) }
 
+-- XXX do away with these?
 type Pat0 a = Pattern Nil a
 type Pat1 b a = forall bs. Pattern bs b -> Pattern bs a
 type Pat2 b c a = forall bs cs. Pattern bs b -> Pattern cs c -> Pattern (bs :++: cs) a
