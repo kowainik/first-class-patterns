@@ -15,8 +15,8 @@ module Data.Pattern.Base (
   Pattern(..),
 
   -- * Clauses
-  Clause,
-  (->>), (<|>), tryMatch, match,
+  Clause, runClause,
+  (->>), (<|>),
 
   -- * Internals
   module Data.Pattern.Base.TypeList,
@@ -63,12 +63,3 @@ infix 4 ->>
 -- | Constructs a 'Clause'.
 (->>) :: Pattern vars a -> Fun vars r -> Clause a r
 (Pattern p) ->> k = Clause (ReaderT $ \a -> fmap (\f -> runTuple f k) (p a))
-
--- | \"Runs\" a 'Clause', by matching it against a value and returning
---   a result if it matches, or @Nothing@ if the match fails.
-tryMatch :: a -> Clause a r -> Maybe r
-tryMatch = flip (runReaderT.runClause)
-
--- | 'match' satisfies the equation @match a c = fromJust (tryMatch a c)@.
-match :: a -> Clause a r -> r
-match = (fmap.fmap) (fromMaybe $ error "failed match") tryMatch

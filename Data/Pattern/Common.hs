@@ -13,20 +13,20 @@ module Data.Pattern.Common (
 
   -- * Pattern combinators
   -- ** Basic patterns
-  var, give, (/\), (\/), view, tryView,
-  -- ** Non-binding patterns
-  is, cst, __, pfail,
+  var, give, __, pfail, cst, (/\), (\/),
+  view, tryView,
+  is,
+
   -- ** Computational patterns
   pfilter, pmap, pfoldr,
 
   -- * Running matches
-  -- ** Anonymous matching
+  match, tryMatch, mmatch,
   elim,
-  -- ** Monadic matching
-  mmatch,
 
   -- * Provided patterns
   -- ** Tuple patterns
+  -- $tuples
   unit, pair, tup3, tup4, tup5,
   -- ** @Maybe@ patterns
   nothing, just,
@@ -59,11 +59,6 @@ import Data.Maybe
 var :: Pattern (a :*: Nil) a
 var = Pattern (Just . oneT)
 
--- | Wildcard pattern: always succeeds, binding no variables. (This is
---   written as two underscores.)
-__ :: Pattern Nil a
-__ = is (const True)
-
 -- | @give b@ always succeeds, ignoring the matched value and
 --   providing the value @b@ instead.  Useful in conjunction with
 --   @(/\\)@ for providing default values in cases that would otherwise
@@ -71,55 +66,14 @@ __ = is (const True)
 give :: b -> Pattern (b :*: Nil) a
 give b = Pattern (const (Just $ oneT b))
 
+-- | Wildcard pattern: always succeeds, binding no variables. (This is
+--   written as two underscores.)
+__ :: Pattern Nil a
+__ = is (const True)
+
 -- | Failure pattern: never succeeds.
 pfail :: Pattern Nil a
 pfail = is (const False)
-
-
--- | Conjunctive (and) pattern: matches a value against two patterns,
---   and succeeds only if both succeed, binding variables from both.
---
--- @(/\\) = 'mk2' (\\a -> Just (a,a))@
-(/\) :: Pattern vs1 a -> Pattern vs2 a -> Pattern (vs1 :++: vs2) a
-(/\) = mk2 (\a -> Just (a,a))
-
--- | Disjunctive (or) pattern: matches a value against the first
---   pattern, or against the second pattern if the first one fails.
-(\/) :: Pattern as a -> Pattern as a -> Pattern as a
-(Pattern l) \/ (Pattern r) = Pattern (\a -> l a `mplus` r a)
-
--- | View pattern: do some computation, then pattern match on the
---   result.
-view :: (a -> b) -> Pattern vs b -> Pattern vs a
-view f = mk1 (Just . f)
-
--- | Partial view pattern: do some (possibly failing) computation,
---   then pattern match on the result if the computation is successful.
---   (Note that 'tryView' is a synonym for 'mk1'.)
-tryView :: (a -> Maybe b) -> Pattern vs b -> Pattern vs a
-tryView = mk1
-
--- | @elim = flip 'match'@
---
--- Useful for anonymous matching (or for building \"eliminators\",
--- like 'maybe' and 'either'). For example:
---
--- > either withLeft withRight = elim $
--- >              left  var ->> withLeft
--- >          <|> right var ->> withRight
-elim :: Clause a r -> a -> r
-elim = flip match
-
--- | @mmatch m p = m >>= 'elim' p@
---
--- Useful for applicative-looking monadic pattern matching, as in
---
--- > ex7 :: IO ()
--- > ex7 = mmatch getLine $
--- >       cst "" ->> return ()
--- >   <|> var    ->> putStrLn . ("You said " ++)
-mmatch :: (Monad m) => m a -> Clause a (m b) -> m b
-mmatch m p = m >>= elim p
 
 -- | Predicate pattern. Succeeds if the given predicate yields 'True',
 --   fails otherwise.
@@ -141,6 +95,104 @@ is g = mk0 (\a -> if g a then Just () else Nothing)
 --   @cst x = is (==x)@.
 cst :: (Eq a) => a -> Pattern Nil a
 cst x = is (==x)
+
+-- | Conjunctive (and) pattern: matches a value against two patterns,
+--   and succeeds only if both succeed, binding variables from both.
+--
+-- @(/\\) = 'mk2' (\\a -> Just (a,a))@
+(/\) :: Pattern vs1 a -> Pattern vs2 a -> Pattern (vs1 :++: vs2) a
+(/\) = mk2 (\a -> Just (a,a))
+
+-- | Disjunctive (or) pattern: matches a value against the first
+--   pattern, or against the second pattern if the first one fails.
+(\/) :: Pattern as a -> Pattern as a -> Pattern as a
+(Pattern l) \/ (Pattern r) = Pattern (\a -> l a `mplus` r a)
+
+-- | View pattern: do some computation, then pattern match on the
+--   result.
+view :: (a -> b) -> Pattern vs b -> Pattern vs a
+view f = mk1 (Just . f)
+
+-- | Partial view pattern: do some (possibly failing) computation,
+--   then pattern match on the result if the computation is successful.
+tryView :: (a -> Maybe b) -> Pattern vs b -> Pattern vs a
+tryView = mk1
+
+-- | \"Runs\" a 'Clause', by matching it against a value and returning
+--   a result if it matches, or @Nothing@ if the match fails.
+tryMatch :: a -> Clause a r -> Maybe r
+tryMatch = flip (runReaderT.runClause)
+
+-- | 'match' satisfies the identity @match a c = fromJust (tryMatch a c)@.
+match :: a -> Clause a r -> r
+match = (fmap.fmap) (fromMaybe $ error "failed match") tryMatch
+
+-- | @mmatch m p = m >>= 'elim' p@
+--
+-- Useful for applicative-looking monadic pattern matching, as in
+--
+-- > ex7 :: IO ()
+-- > ex7 = mmatch getLine $
+-- >       cst "" ->> return ()
+-- >   <|> var    ->> putStrLn . ("You said " ++)
+mmatch :: (Monad m) => m a -> Clause a (m b) -> m b
+mmatch m p = m >>= elim p
+
+-- | @elim = flip 'match'@
+--
+-- Useful for anonymous matching (or for building \"eliminators\",
+-- like 'maybe' and 'either'). For example:
+--
+-- > either withLeft withRight = elim $
+-- >              left  var ->> withLeft
+-- >          <|> right var ->> withRight
+elim :: Clause a r -> a -> r
+elim = flip match
+
+------------------------------------------------------------
+-- Tuple patterns
+------------------------------------------------------------
+
+-- $tuples
+--
+-- If you need to pattern match on tuples bigger than 5-tuples, you
+-- are Doing It Wrong.
+
+-- | A strict match on the unit value @()@.
+unit :: Pattern Nil ()
+unit = mk0 (\() -> Just ())
+
+-- | Construct a pattern match against a pair from a pair of patterns.
+pair :: Pattern vs1 a -> Pattern vs2 b -> Pattern (vs1 :++: vs2) (a,b)
+pair (Pattern pa) (Pattern pb) = Pattern (\(a,b) -> (<>) <$> pa a <*> pb b)
+
+-- | Match a 3-tuple.
+tup3 :: Pattern vs1 a ->
+        Pattern vs2 b ->
+        Pattern vs3 c ->
+        Pattern (vs1 :++: vs2 :++: vs3) (a,b,c)
+tup3 (Pattern pa) (Pattern pb) (Pattern pc) =
+   Pattern (\(a,b,c) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> pc c))
+
+-- | Match a 4-tuple.
+tup4 :: Pattern vs1 a ->
+        Pattern vs2 b ->
+        Pattern vs3 c ->
+        Pattern vs4 d ->
+        Pattern (vs1 :++: vs2 :++: vs3 :++: vs4) (a,b,c,d)
+tup4 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) =
+   Pattern (\(a,b,c,d) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> ((<>) <$> pc c <*> pd d)))
+
+-- | Match a 5-tuple.
+tup5 :: Pattern vs1 a ->
+        Pattern vs2 b ->
+        Pattern vs3 c ->
+        Pattern vs4 d ->
+        Pattern vs5 e ->
+        Pattern (vs1 :++: vs2 :++: vs3 :++: vs4 :++: vs5) (a,b,c,d,e)
+tup5 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) (Pattern pe) =
+   Pattern (\(a,b,c,d,e) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> ((<>) <$> pc c <*> ((<>) <$> pd d <*> pe e))))
+
 
 -- | Match the 'Left' constructor of 'Either'.
 left :: Pattern vs a -> Pattern vs (Either a b)
@@ -209,42 +261,6 @@ pmap (Pattern p) = Pattern $ fmap distribute . T.traverse p
 --   into separate lists.
 pfoldr :: (F.Foldable t, Functor t) => Pattern vs a -> (Fun vs (b -> b)) -> b -> Pattern (b :*: Nil) (t a)
 pfoldr (Pattern p) f b = Pattern $ Just . oneT . foldr (flip runTuple f) b . catMaybes . F.toList . fmap p
-
--- | A strict match on the unit value @()@.
-unit :: Pattern Nil ()
-unit = mk0 (\() -> Just ())
-
--- | Construct a pattern match against a pair from a pair of patterns.
-pair :: Pattern vs1 a -> Pattern vs2 b -> Pattern (vs1 :++: vs2) (a,b)
-pair (Pattern pa) (Pattern pb) = Pattern (\(a,b) -> (<>) <$> pa a <*> pb b)
-
--- | Match a 3-tuple.
-tup3 :: Pattern vs1 a ->
-        Pattern vs2 b ->
-        Pattern vs3 c ->
-        Pattern (vs1 :++: vs2 :++: vs3) (a,b,c)
-tup3 (Pattern pa) (Pattern pb) (Pattern pc) =
-   Pattern (\(a,b,c) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> pc c))
-
--- | Match a 4-tuple.
-tup4 :: Pattern vs1 a ->
-        Pattern vs2 b ->
-        Pattern vs3 c ->
-        Pattern vs4 d ->
-        Pattern (vs1 :++: vs2 :++: vs3 :++: vs4) (a,b,c,d)
-tup4 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) =
-   Pattern (\(a,b,c,d) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> ((<>) <$> pc c <*> pd d)))
-
--- | Match a 5-tuple.
-tup5 :: Pattern vs1 a ->
-        Pattern vs2 b ->
-        Pattern vs3 c ->
-        Pattern vs4 d ->
-        Pattern vs5 e ->
-        Pattern (vs1 :++: vs2 :++: vs3 :++: vs4 :++: vs5) (a,b,c,d,e)
-tup5 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) (Pattern pe) =
-   Pattern (\(a,b,c,d,e) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> ((<>) <$> pc c <*> ((<>) <$> pd d <*> pe e))))
-
 
 mk0 :: (a -> Maybe ()) -> Pattern Nil a
 mk0 g = Pattern (fmap (const zeroT) . g)
