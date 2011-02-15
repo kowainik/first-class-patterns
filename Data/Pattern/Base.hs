@@ -33,20 +33,18 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Trans.Reader
 
-
--- | The pattern type. A @Pattern vars a@ is a pattern which matches
--- against @a@s and binds variables with types given by the type-list
--- @vars@.
+-- | The pattern type. A value of type @Pattern vars a@ is a pattern
+--   which matches values of type @a@ and binds variables with types
+--   given by the type-list @vars@.  For example, something of type
 --
--- Although this is the basic type used by patterns, many of
--- pattern combinators (for instance, 'Data.Pattern.Base.Common.left')
--- have types better expressed by the type synonyms 'Pat0', 'Pat1',
--- 'Pat2', etc, 'Pat5', so that nesting of patterns (e.g. @left (tup2
--- var var)@) can be written as function application.
+-- > Pattern (a :*: c :*: Nil) (a,b,c)
 --
--- Most \"normal\" pattern matchers (in fact, all of the matchers in
--- "Data.Pattern.Common" except @var@ and @(\/)@) can be conveniently
--- defined using @mk0@, @mk1@, etc, @mk5@.
+--   is a pattern which matches against a triple and binds values of
+--   types @a@ and @c@. (A pattern of this type can be constructed as
+--   @tup3 var __ var@.)
+--
+--   Many \"normal\" patterns can be conveniently defined using 'mk0',
+--   'mk1', 'mk2', and so on.
 newtype Pattern vars a = Pattern { runPattern :: a -> Maybe (Tuple vars) }
 
 -- XXX do away with these?
