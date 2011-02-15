@@ -13,13 +13,12 @@
 module Data.Pattern.Base (
   -- * Patterns
   Pattern(..),
-  -- | Pattern synonyms. A @PatN@ is a function which takes @N@
-  -- subpatterns and yields a 'Pattern' which binds all of the
-  -- subpatterns' variables in order.
-  Pat0, Pat1, Pat2, Pat3, Pat4, Pat5,
+
   -- * Clauses
   Clause,
   (->>), (<|>), tryMatch, match,
+
+  -- * Internals
   module Data.Pattern.Base.TypeList,
   module Data.Pattern.Base.Tuple,
  ) where
@@ -47,15 +46,6 @@ import Control.Monad.Trans.Reader
 --   'mk1', 'mk2', and so on.
 newtype Pattern vars a = Pattern { runPattern :: a -> Maybe (Tuple vars) }
 
--- XXX do away with these?
-type Pat0 a = Pattern Nil a
-type Pat1 b a = forall bs. Pattern bs b -> Pattern bs a
-type Pat2 b c a = forall bs cs. Pattern bs b -> Pattern cs c -> Pattern (bs :++: cs) a
-type Pat3 b c d a = forall bs cs ds. Pattern bs b -> Pattern cs c -> Pattern ds d -> Pattern (bs :++: cs :++: ds) a
-type Pat4 b c d e a = forall bs cs ds es. Pattern bs b -> Pattern cs c -> Pattern ds d -> Pattern es e -> Pattern (bs :++: cs :++: ds :++: es) a
-type Pat5 b c d e f a = forall bs cs ds es fs. Pattern bs b -> Pattern cs c -> Pattern ds d -> Pattern es e -> Pattern fs f -> Pattern (bs :++: cs :++: ds :++: es :++: fs) a
-
-
 -- | Pattern-match clauses. Typically something of the form
 --
 -- @pattern '->>' function@
@@ -73,7 +63,6 @@ infix 4 ->>
 -- | Constructs a 'Clause'.
 (->>) :: Pattern vars a -> Fun vars r -> Clause a r
 (Pattern p) ->> k = Clause (ReaderT $ \a -> fmap (\f -> runTuple f k) (p a))
-
 
 -- | \"Runs\" a 'Clause', by matching it against a value and returning
 --   a result if it matches, or @Nothing@ if the match fails.

@@ -27,7 +27,7 @@ module Data.Pattern.Common (
 
   -- * Provided patterns
   -- ** Tuple patterns
-  tup0, tup1, tup2, pair, tup3, tup4, tup5,
+  unit, pair, tup3, tup4, tup5,
   -- ** @Maybe@ patterns
   nothing, just,
   -- ** @Either@ patterns
@@ -61,7 +61,7 @@ var = Pattern (Just . oneT)
 
 -- | Wildcard pattern: always succeeds, binding no variables. (This is
 --   written as two underscores.)
-__ :: Pat0 a
+__ :: Pattern Nil a
 __ = is (const True)
 
 -- | @give b@ always succeeds, ignoring the matched value and
@@ -72,7 +72,7 @@ give :: b -> Pattern (b :*: Nil) a
 give b = Pattern (const (Just $ oneT b))
 
 -- | Failure pattern: never succeeds.
-pfail :: Pat0 a
+pfail :: Pattern Nil a
 pfail = is (const False)
 
 
@@ -80,7 +80,7 @@ pfail = is (const False)
 --   and succeeds only if both succeed, binding variables from both.
 --
 -- @(/\\) = 'mk2' (\\a -> Just (a,a))@
-(/\) :: Pat2 a a a
+(/\) :: Pattern vs1 a -> Pattern vs2 a -> Pattern (vs1 :++: vs2) a
 (/\) = mk2 (\a -> Just (a,a))
 
 -- | Disjunctive (or) pattern: matches a value against the first
@@ -90,13 +90,13 @@ pfail = is (const False)
 
 -- | View pattern: do some computation, then pattern match on the
 --   result.
-view :: (a -> b) -> Pat1 b a
+view :: (a -> b) -> Pattern vs b -> Pattern vs a
 view f = mk1 (Just . f)
 
 -- | Partial view pattern: do some (possibly failing) computation,
 --   then pattern match on the result if the computation is successful.
 --   (Note that 'tryView' is a synonym for 'mk1'.)
-tryView :: (a -> Maybe b) -> Pat1 b a
+tryView :: (a -> Maybe b) -> Pattern vs b -> Pattern vs a
 tryView = mk1
 
 -- | @elim = flip 'match'@
@@ -133,37 +133,37 @@ mmatch m p = m >>= elim p
 --
 -- Note that 'is' is like 'mk0' but with 'Bool' instead of @'Maybe'
 -- ()@.
-is :: (a -> Bool) -> Pat0 a
+is :: (a -> Bool) -> Pattern Nil a
 is g = mk0 (\a -> if g a then Just () else Nothing)
 
 -- | Constant pattern: test for equality to the given constant.
 --
 --   @cst x = is (==x)@.
-cst :: (Eq a) => a -> Pat0 a
+cst :: (Eq a) => a -> Pattern Nil a
 cst x = is (==x)
 
 -- | Match the 'Left' constructor of 'Either'.
-left :: Pat1 a (Either a b)
+left :: Pattern vs a -> Pattern vs (Either a b)
 left = mk1 (either Just (const Nothing))
 
 -- | Match the 'Right' constructor of 'Either'.
-right :: Pat1 b (Either a b)
+right :: Pattern vs b -> Pattern vs (Either a b)
 right = mk1 (either (const Nothing) Just)
 
 -- | Match the 'Nothing' constructor of 'Maybe'.
-nothing :: Pat0 (Maybe a)
+nothing :: Pattern Nil (Maybe a)
 nothing = is isNothing
 
 -- | Match the 'Just' constructor of 'Maybe'.
-just :: Pat1 a (Maybe a)
+just :: Pattern vs a -> Pattern vs (Maybe a)
 just = mk1 id
 
 -- | Match the empty list.
-nil :: Pat0 [a]
+nil :: Pattern Nil [a]
 nil = is null
 
 -- | Match a cons.
-cons :: Pat2 a [a] [a]
+cons :: Pattern vs1 a -> Pattern vs2 [a] -> Pattern (vs1 :++: vs2) [a]
 cons = mk2 (\l -> case l of { (x:xs) -> Just (x,xs); _ -> Nothing })
 
 
@@ -210,69 +210,91 @@ pmap (Pattern p) = Pattern $ fmap distribute . T.traverse p
 pfoldr :: (F.Foldable t, Functor t) => Pattern vs a -> (Fun vs (b -> b)) -> b -> Pattern (b :*: Nil) (t a)
 pfoldr (Pattern p) f b = Pattern $ Just . oneT . foldr (flip runTuple f) b . catMaybes . F.toList . fmap p
 
--- | \"0-tuple pattern\". A strict match on the @()@.
-tup0 :: Pat0 ()
-tup0 = mk0 (\() -> Just ())
+-- | A strict match on the unit value @()@.
+unit :: Pattern Nil ()
+unit = mk0 (\() -> Just ())
 
--- | \"1-tuple pattern\". Rather useless.
-tup1 :: Pat1 a a
-tup1 = mk1 Just
+-- | Construct a pattern match against a pair from a pair of patterns.
+pair :: Pattern vs1 a -> Pattern vs2 b -> Pattern (vs1 :++: vs2) (a,b)
+pair (Pattern pa) (Pattern pb) = Pattern (\(a,b) -> (<>) <$> pa a <*> pb b)
 
--- | \"2-tuple pattern\"
-tup2 :: Pat2 a b (a,b)
-tup2 (Pattern pa) (Pattern pb) = Pattern (\(a,b) -> (<>) <$> pa a <*> pb b)
-
--- | Convenient synonym for 'tup2'.
-pair :: Pat2 a b (a,b)
-pair = tup2
-
--- | \"3-tuple pattern\"
-tup3 :: Pat3 a b c (a,b,c)
+-- | Match a 3-tuple.
+tup3 :: Pattern vs1 a ->
+        Pattern vs2 b ->
+        Pattern vs3 c ->
+        Pattern (vs1 :++: vs2 :++: vs3) (a,b,c)
 tup3 (Pattern pa) (Pattern pb) (Pattern pc) =
    Pattern (\(a,b,c) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> pc c))
 
--- | \"4-tuple pattern\"
-tup4 :: Pat4 a b c d (a,b,c,d)
+-- | Match a 4-tuple.
+tup4 :: Pattern vs1 a ->
+        Pattern vs2 b ->
+        Pattern vs3 c ->
+        Pattern vs4 d ->
+        Pattern (vs1 :++: vs2 :++: vs3 :++: vs4) (a,b,c,d)
 tup4 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) =
    Pattern (\(a,b,c,d) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> ((<>) <$> pc c <*> pd d)))
 
--- | \"5-tuple pattern\"
-tup5 :: Pat5 a b c d e (a,b,c,d,e)
+-- | Match a 5-tuple.
+tup5 :: Pattern vs1 a ->
+        Pattern vs2 b ->
+        Pattern vs3 c ->
+        Pattern vs4 d ->
+        Pattern vs5 e ->
+        Pattern (vs1 :++: vs2 :++: vs3 :++: vs4 :++: vs5) (a,b,c,d,e)
 tup5 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) (Pattern pe) =
    Pattern (\(a,b,c,d,e) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> ((<>) <$> pc c <*> ((<>) <$> pd d <*> pe e))))
 
 
-mk0 :: (a -> Maybe ()) -> Pat0 a
+mk0 :: (a -> Maybe ()) -> Pattern Nil a
 mk0 g = Pattern (fmap (const zeroT) . g)
 
-mk1 :: (a -> Maybe b) -> Pat1 b a
+mk1 :: (a -> Maybe b) -> Pattern vs b -> Pattern vs a
 mk1 g (Pattern p) = Pattern (\a -> g a >>= p)
 
-mk2 :: (a -> Maybe (b,c)) -> Pat2 b c a
-mk2 g b c = mk1 g (tup2 b c)
+mk2 :: (a -> Maybe (b,c)) ->
+       Pattern vs1 b ->
+       Pattern vs2 c ->
+       Pattern (vs1 :++: vs2) a
+mk2 g b c = mk1 g (pair b c)
 
-mk3 :: (a -> Maybe (b,c,d)) -> Pat3 b c d a
+mk3 :: (a -> Maybe (b,c,d)) ->
+       Pattern vs1 b ->
+       Pattern vs2 c ->
+       Pattern vs3 d ->
+       Pattern (vs1 :++: vs2 :++: vs3) a
 mk3 g b c d = mk1 g (tup3 b c d)
 
-mk4 :: (a -> Maybe (b,c,d,e)) -> Pat4 b c d e a
+mk4 :: (a -> Maybe (b,c,d,e)) ->
+       Pattern vs1 b ->
+       Pattern vs2 c ->
+       Pattern vs3 d ->
+       Pattern vs4 e ->
+       Pattern (vs1 :++: vs2 :++: vs3 :++: vs4) a
 mk4 g b c d e = mk1 g (tup4 b c d e)
 
-mk5 :: (a -> Maybe (b,c,d,e,f)) -> Pat5 b c d e f a
+mk5 :: (a -> Maybe (b,c,d,e,f)) ->
+       Pattern vs1 b ->
+       Pattern vs2 c ->
+       Pattern vs3 d ->
+       Pattern vs4 e ->
+       Pattern vs5 f ->
+       Pattern (vs1 :++: vs2 :++: vs3 :++: vs4 :++: vs5) a
 mk5 g b c d e f = mk1 g (tup5 b c d e f)
 
 
-zero :: (Integral a, Eq a) => Pat0 a
+zero :: (Integral a, Eq a) => Pattern Nil a
 zero = cst 0
 
-suc :: (Integral a, Eq a) => Pat1 a a
+suc :: (Integral a, Eq a) => Pattern vs a -> Pattern vs a
 suc = mk1 (\n -> if (n <= 0) then Nothing else Just (n-1))
 
 
 -- XXX better names? and export
-twice :: (Integral a, Eq a) => Pat1 a a
+twice :: (Integral a, Eq a) => Pattern vs a -> Pattern vs a
 twice = mk1 (\n -> if even n then Just (n `div` 2) else Nothing)
 
-succtwice :: (Integral a, Eq a) => Pat1 a a
+succtwice :: (Integral a, Eq a) => Pattern vs a -> Pattern vs a
 succtwice = mk1 (\n -> if odd n then Just (n `div` 2) else Nothing)
 
 
