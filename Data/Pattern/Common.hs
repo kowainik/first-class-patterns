@@ -14,7 +14,7 @@ module Data.Pattern.Common (
   -- * Pattern combinators
   -- ** Basic patterns
   var, give, __, pfail, cst, (/\), (\/),
-  view, tryView,
+  view, (-->), tryView, (-?>),
   is,
 
   -- ** Computational patterns
@@ -115,10 +115,23 @@ cst x = is (==x)
 view :: (a -> b) -> Pattern vs b -> Pattern vs a
 view f = mk1 (Just . f)
 
+-- ->> is infix 4, so this ought to have higher precedence
+infix 5 -->
+
+-- | Convenient infix synonym for 'view'.
+(-->) :: (a -> b) -> Pattern vs b -> Pattern vs a
+(-->) = view
+
 -- | Partial view pattern: do some (possibly failing) computation,
 --   then pattern match on the result if the computation is successful.
 tryView :: (a -> Maybe b) -> Pattern vs b -> Pattern vs a
 tryView = mk1
+
+infix 5 -?>
+
+-- | Convenient infix synonym for 'tryView'.
+(-?>) :: (a -> Maybe b) -> Pattern vs b -> Pattern vs a
+(-?>) = tryView
 
 -- | \"Runs\" a 'Clause', by matching it against a value and returning
 --   a result if it matches, or @Nothing@ if the match fails.
