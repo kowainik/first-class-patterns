@@ -24,17 +24,17 @@ module Data.Pattern.Common (
   match, tryMatch, mmatch,
   elim,
 
-  -- * Provided patterns
-  -- ** Tuple patterns
+  -- * Patterns for common data types
+  -- ** Tuples
   -- $tuples
   unit, pair, tup3, tup4, tup5,
-  -- ** @Maybe@ patterns
+  -- ** @Maybe@
   nothing, just,
-  -- ** @Either@ patterns
+  -- ** @Either@
   left, right,
-  -- ** List patterns
+  -- ** Lists
   nil, cons,
-  -- ** Numeric patterns
+  -- ** Numerics
   zero, suc,
 
   -- * Building your own patterns
@@ -63,7 +63,7 @@ var = Pattern (Just . oneT)
 
 -- | @give b@ always succeeds, ignoring the matched value and
 --   providing the value @b@ instead.  Useful in conjunction with
---   @(/\\)@ for providing default values in cases that would otherwise
+--   @('/\')@ for providing default values in cases that would otherwise
 --   not bind any values.
 give :: b -> Pattern (b :*: Nil) a
 give b = Pattern (const (Just $ oneT b))

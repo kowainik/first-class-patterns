@@ -57,7 +57,14 @@ newtype Pattern vars a = Pattern { runPattern :: a -> Maybe (Tuple vars) }
 --   and manipulated by the 'Monad' and 'MonadPlus' instances. In
 --   particular, the @('<|>')@ operator from the 'Alternative' class
 --   is the way to list multiple cases in a pattern.
-newtype Clause a r = Clause { runClause :: ReaderT a Maybe r }
+newtype Clause a r = Clause { runClause :: ReaderT a Maybe r
+                              -- ^ Extract the underlying computation
+                              -- constituting a 'Clause'. This
+                              -- function is not intended to be used
+                              -- directly; instead, see 'match',
+                              -- 'tryMatch', 'mmatch', and 'elim' from
+                              -- "Data.Pattern.Common".
+                            }
     deriving(Functor,Applicative,Monad,Alternative,MonadPlus)
 
 -- (<|>) is infix 3, so we make (->>) infix 4.
