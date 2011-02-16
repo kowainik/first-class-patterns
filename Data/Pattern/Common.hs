@@ -48,6 +48,8 @@ import Data.Pattern.Base
 
 import Control.Applicative
 import Control.Monad
+import Control.Monad.Trans.Reader
+
 import qualified Data.Foldable as F
 import qualified Data.Traversable as T
 
