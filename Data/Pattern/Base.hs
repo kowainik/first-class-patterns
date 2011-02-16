@@ -70,4 +70,4 @@ infix 4 ->>
 -- > pair var nothing    ->> \x -> x + 3
 -- > pair var (just var) ->> \x y -> x + y + 3
 (->>) :: Pattern vars a -> Fun vars r -> Clause a r
-(Pattern p) ->> k = Clause (ReaderT $ \a -> fmap (\f -> runTuple f k) (p a))
+(Pattern p) ->> k = Clause (ReaderT $ fmap (flip runTuple k) . p)
