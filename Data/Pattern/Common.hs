@@ -57,6 +57,10 @@ import qualified Data.Traversable as T
 
 import Data.Maybe
 
+
+------------------------------------------------------------
+-- Basic patterns
+
 -- XXX todo: add examples of each combinator!
 
 -- | Variable pattern: always succeeds, and binds the value to a variable.
@@ -135,115 +139,9 @@ infix 5 -?>
 (-?>) :: (a -> Maybe b) -> Pattern vs b -> Pattern vs a
 (-?>) = tryView
 
--- | \"Runs\" a 'Clause', by matching it against a value and returning
---   a result if it matches, or @Nothing@ if the match fails.
-tryMatch :: a -> Clause a r -> Maybe r
-tryMatch = flip (runReaderT.runClause)
-
--- | 'match' satisfies the identity @match a c = fromJust (tryMatch a c)@.
-match :: a -> Clause a r -> r
-match = (fmap.fmap) (fromMaybe $ error "failed match") tryMatch
-
--- | @mmatch m p = m >>= 'elim' p@
---
--- Useful for applicative-looking monadic pattern matching, as in
---
--- > ex7 :: IO ()
--- > ex7 = mmatch getLine $
--- >       cst "" ->> return ()
--- >   <|> var    ->> putStrLn . ("You said " ++)
-mmatch :: (Monad m) => m a -> Clause a (m b) -> m b
-mmatch m p = m >>= elim p
-
--- | @elim = flip 'match'@
---
--- Useful for anonymous matching (or for building \"eliminators\",
--- like 'maybe' and 'either'). For example:
---
--- > either withLeft withRight = elim $
--- >              left  var ->> withLeft
--- >          <|> right var ->> withRight
-elim :: Clause a r -> a -> r
-elim = flip match
 
 ------------------------------------------------------------
--- Boolean patterns
-
--- | Match @True@.
-true :: Pattern Nil Bool
-true = is id
-
--- | Match @False@.
-false :: Pattern Nil Bool
-false = is not   -- is too!
-
-------------------------------------------------------------
-
--- $tuples
---
--- If you need to pattern match on tuples bigger than 5-tuples, you
--- are Doing It Wrong.
-
--- | A strict match on the unit value @()@.
-unit :: Pattern Nil ()
-unit = mk0 (\() -> Just ())
-
--- | Construct a pattern match against a pair from a pair of patterns.
-pair :: Pattern vs1 a -> Pattern vs2 b -> Pattern (vs1 :++: vs2) (a,b)
-pair (Pattern pa) (Pattern pb) = Pattern (\(a,b) -> (<>) <$> pa a <*> pb b)
-
--- | Match a 3-tuple.
-tup3 :: Pattern vs1 a ->
-        Pattern vs2 b ->
-        Pattern vs3 c ->
-        Pattern (vs1 :++: vs2 :++: vs3) (a,b,c)
-tup3 (Pattern pa) (Pattern pb) (Pattern pc) =
-   Pattern (\(a,b,c) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> pc c))
-
--- | Match a 4-tuple.
-tup4 :: Pattern vs1 a ->
-        Pattern vs2 b ->
-        Pattern vs3 c ->
-        Pattern vs4 d ->
-        Pattern (vs1 :++: vs2 :++: vs3 :++: vs4) (a,b,c,d)
-tup4 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) =
-   Pattern (\(a,b,c,d) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> ((<>) <$> pc c <*> pd d)))
-
--- | Match a 5-tuple.
-tup5 :: Pattern vs1 a ->
-        Pattern vs2 b ->
-        Pattern vs3 c ->
-        Pattern vs4 d ->
-        Pattern vs5 e ->
-        Pattern (vs1 :++: vs2 :++: vs3 :++: vs4 :++: vs5) (a,b,c,d,e)
-tup5 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) (Pattern pe) =
-   Pattern (\(a,b,c,d,e) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> ((<>) <$> pc c <*> ((<>) <$> pd d <*> pe e))))
-
-
--- | Match the 'Left' constructor of 'Either'.
-left :: Pattern vs a -> Pattern vs (Either a b)
-left = mk1 (either Just (const Nothing))
-
--- | Match the 'Right' constructor of 'Either'.
-right :: Pattern vs b -> Pattern vs (Either a b)
-right = mk1 (either (const Nothing) Just)
-
--- | Match the 'Nothing' constructor of 'Maybe'.
-nothing :: Pattern Nil (Maybe a)
-nothing = is isNothing
-
--- | Match the 'Just' constructor of 'Maybe'.
-just :: Pattern vs a -> Pattern vs (Maybe a)
-just = mk1 id
-
--- | Match the empty list.
-nil :: Pattern Nil [a]
-nil = is null
-
--- | Match a cons.
-cons :: Pattern vs1 a -> Pattern vs2 [a] -> Pattern (vs1 :++: vs2) [a]
-cons = mk2 (\l -> case l of { (x:xs) -> Just (x,xs); _ -> Nothing })
-
+-- Computational patterns
 
 -- XXX use (Tup vs :*: Nil) or something like that instead of (Map [] vs)?
 
@@ -288,6 +186,162 @@ pmap (Pattern p) = Pattern $ fmap distribute . T.traverse p
 pfoldr :: (F.Foldable t, Functor t) => Pattern vs a -> (Fun vs (b -> b)) -> b -> Pattern (b :*: Nil) (t a)
 pfoldr (Pattern p) f b = Pattern $ Just . oneT . foldr (flip runTuple f) b . catMaybes . F.toList . fmap p
 
+
+------------------------------------------------------------
+-- Running matches
+
+-- | \"Runs\" a 'Clause', by matching it against a value and returning
+--   a result if it matches, or @Nothing@ if the match fails.
+tryMatch :: a -> Clause a r -> Maybe r
+tryMatch = flip (runReaderT.runClause)
+
+-- | 'match' satisfies the identity @match a c = fromJust (tryMatch a c)@.
+match :: a -> Clause a r -> r
+match = (fmap.fmap) (fromMaybe $ error "failed match") tryMatch
+
+-- | @mmatch m p = m >>= 'elim' p@
+--
+-- Useful for applicative-looking monadic pattern matching, as in
+--
+-- > ex7 :: IO ()
+-- > ex7 = mmatch getLine $
+-- >       cst "" ->> return ()
+-- >   <|> var    ->> putStrLn . ("You said " ++)
+mmatch :: (Monad m) => m a -> Clause a (m b) -> m b
+mmatch m p = m >>= elim p
+
+-- | @elim = flip 'match'@
+--
+-- Useful for anonymous matching (or for building \"eliminators\",
+-- like 'maybe' and 'either'). For example:
+--
+-- > either withLeft withRight = elim $
+-- >              left  var ->> withLeft
+-- >          <|> right var ->> withRight
+elim :: Clause a r -> a -> r
+elim = flip match
+
+
+------------------------------------------------------------
+-- Boolean patterns
+
+-- | Match @True@.
+true :: Pattern Nil Bool
+true = is id
+
+-- | Match @False@.
+false :: Pattern Nil Bool
+false = is not   -- is too!
+
+
+------------------------------------------------------------
+-- Tuple patterns
+
+-- $tuples
+--
+-- If you need to pattern match on tuples bigger than 5-tuples, you
+-- are Doing It Wrong.
+
+-- | A strict match on the unit value @()@.
+unit :: Pattern Nil ()
+unit = mk0 (\() -> Just ())
+
+-- | Construct a pattern match against a pair from a pair of patterns.
+pair :: Pattern vs1 a -> Pattern vs2 b -> Pattern (vs1 :++: vs2) (a,b)
+pair (Pattern pa) (Pattern pb) = Pattern (\(a,b) -> (<>) <$> pa a <*> pb b)
+
+-- | Match a 3-tuple.
+tup3 :: Pattern vs1 a ->
+        Pattern vs2 b ->
+        Pattern vs3 c ->
+        Pattern (vs1 :++: vs2 :++: vs3) (a,b,c)
+tup3 (Pattern pa) (Pattern pb) (Pattern pc) =
+   Pattern (\(a,b,c) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> pc c))
+
+-- | Match a 4-tuple.
+tup4 :: Pattern vs1 a ->
+        Pattern vs2 b ->
+        Pattern vs3 c ->
+        Pattern vs4 d ->
+        Pattern (vs1 :++: vs2 :++: vs3 :++: vs4) (a,b,c,d)
+tup4 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) =
+   Pattern (\(a,b,c,d) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> ((<>) <$> pc c <*> pd d)))
+
+-- | Match a 5-tuple.
+tup5 :: Pattern vs1 a ->
+        Pattern vs2 b ->
+        Pattern vs3 c ->
+        Pattern vs4 d ->
+        Pattern vs5 e ->
+        Pattern (vs1 :++: vs2 :++: vs3 :++: vs4 :++: vs5) (a,b,c,d,e)
+tup5 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) (Pattern pe) =
+   Pattern (\(a,b,c,d,e) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> ((<>) <$> pc c <*> ((<>) <$> pd d <*> pe e))))
+
+
+------------------------------------------------------------
+-- Maybe
+
+-- | Match the 'Nothing' constructor of 'Maybe'.
+nothing :: Pattern Nil (Maybe a)
+nothing = is isNothing
+
+-- | Match the 'Just' constructor of 'Maybe'.
+just :: Pattern vs a -> Pattern vs (Maybe a)
+just = mk1 id
+
+
+------------------------------------------------------------
+-- Either
+
+-- | Match the 'Left' constructor of 'Either'.
+left :: Pattern vs a -> Pattern vs (Either a b)
+left = mk1 (either Just (const Nothing))
+
+-- | Match the 'Right' constructor of 'Either'.
+right :: Pattern vs b -> Pattern vs (Either a b)
+right = mk1 (either (const Nothing) Just)
+
+
+------------------------------------------------------------
+-- Lists
+
+-- | Match the empty list.
+nil :: Pattern Nil [a]
+nil = is null
+
+-- | Match a cons.
+cons :: Pattern vs1 a -> Pattern vs2 [a] -> Pattern (vs1 :++: vs2) [a]
+cons = mk2 (\l -> case l of { (x:xs) -> Just (x,xs); _ -> Nothing })
+
+
+------------------------------------------------------------
+-- Numerics
+
+-- | Match zero.
+zero :: (Integral a, Eq a) => Pattern Nil a
+zero = cst 0
+
+-- | Match a natural number which is the successor of another natural
+--   (and match the predecessor with a nested pattern).  Together,
+--   'zero' and 'suc' allow viewing @Integral@ types as Peano numbers.
+--
+--   Note that 'suc' never matches negative numbers.
+suc :: (Integral a, Eq a) => Pattern vs a -> Pattern vs a
+suc = mk1 (\n -> if (n <= 0) then Nothing else Just (n-1))
+
+
+-- XXX better names? and export
+twice :: (Integral a, Eq a) => Pattern vs a -> Pattern vs a
+twice = mk1 (\n -> if even n then Just (n `div` 2) else Nothing)
+
+succtwice :: (Integral a, Eq a) => Pattern vs a -> Pattern vs a
+succtwice = mk1 (\n -> if odd n then Just (n `div` 2) else Nothing)
+
+
+
+------------------------------------------------------------
+-- Constructing patterns
+
 mk0 :: (a -> Maybe ()) -> Pattern Nil a
 mk0 g = Pattern (fmap (const zeroT) . g)
 
@@ -324,20 +378,6 @@ mk5 :: (a -> Maybe (b,c,d,e,f)) ->
        Pattern (vs1 :++: vs2 :++: vs3 :++: vs4 :++: vs5) a
 mk5 g b c d e f = mk1 g (tup5 b c d e f)
 
-
-zero :: (Integral a, Eq a) => Pattern Nil a
-zero = cst 0
-
-suc :: (Integral a, Eq a) => Pattern vs a -> Pattern vs a
-suc = mk1 (\n -> if (n <= 0) then Nothing else Just (n-1))
-
-
--- XXX better names? and export
-twice :: (Integral a, Eq a) => Pattern vs a -> Pattern vs a
-twice = mk1 (\n -> if even n then Just (n `div` 2) else Nothing)
-
-succtwice :: (Integral a, Eq a) => Pattern vs a -> Pattern vs a
-succtwice = mk1 (\n -> if odd n then Just (n `div` 2) else Nothing)
 
 
 -- XXX de Bruijn references for nonlinear patterns?
