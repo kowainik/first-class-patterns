@@ -25,6 +25,8 @@ module Data.Pattern.Common (
   elim,
 
   -- * Patterns for common data types
+  -- ** Booleans
+  true, false,
   -- ** Tuples
   -- $tuples
   unit, pair, tup3, tup4, tup5,
@@ -165,7 +167,16 @@ elim :: Clause a r -> a -> r
 elim = flip match
 
 ------------------------------------------------------------
--- Tuple patterns
+-- Boolean patterns
+
+-- | Match @True@.
+true :: Pattern Nil Bool
+true = is id
+
+-- | Match @False@.
+false :: Pattern Nil Bool
+false = is not   -- is too!
+
 ------------------------------------------------------------
 
 -- $tuples
