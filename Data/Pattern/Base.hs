@@ -6,9 +6,9 @@
 -- Stability:   experimental
 -- Portability: non-portable (see .cabal)
 --
--- The main types used in the implementation of first-class patterns.
+-- The main types used in the implementation of first-class patterns:
+-- 'Pattern' and 'Clause'.
 -----------------------------------------------------------------------------
-
 
 module Data.Pattern.Base (
   -- * Patterns
@@ -48,18 +48,26 @@ newtype Pattern vars a = Pattern { runPattern :: a -> Maybe (Tuple vars) }
 
 -- | Pattern-match clauses. Typically something of the form
 --
--- @pattern '->>' function@
+--   @pattern '->>' function@
 --
--- Clauses can be constructed with @('->>')@, run with 'tryMatch', and
--- manipulated by the 'Monad' and 'MonadPlus' instances. In
--- particular, @('<|>')@ of the 'Alternative' class is the way to list
--- multiple cases in a pattern.
+--   where the function takes one argument for each variable bound by
+--   the pattern.
+--
+--   Clauses can be constructed with @('->>')@, run with 'tryMatch',
+--   and manipulated by the 'Monad' and 'MonadPlus' instances. In
+--   particular, the @('<|>')@ operator from the 'Alternative' class
+--   is the way to list multiple cases in a pattern.
 newtype Clause a r = Clause { runClause :: ReaderT a Maybe r }
     deriving(Functor,Applicative,Monad,Alternative,MonadPlus)
 
--- (<|>) has infix 3, so we make (->>) infix 4.
+-- (<|>) is infix 3, so we make (->>) infix 4.
 infix 4 ->>
 
--- | Constructs a 'Clause'.
+-- | Construct a 'Clause' from a pattern and a function which takes
+--   one argument for each variable bound by the pattern. For example,
+--
+-- > pair __ nothing     ->> 3
+-- > pair var nothing    ->> \x -> x + 3
+-- > pair var (just var) ->> \x y -> x + y + 3
 (->>) :: Pattern vars a -> Fun vars r -> Clause a r
 (Pattern p) ->> k = Clause (ReaderT $ \a -> fmap (\f -> runTuple f k) (p a))
