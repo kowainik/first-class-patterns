@@ -59,15 +59,12 @@ instance Difference GadtD where
           Equal -> f nil
 
 class List a where
-    {-# INLINE closure #-}
     closure :: forall b. List b =>
        Proxy a -> Proxy b ->
         ListD (a :++: b)
-    {-# INLINE assoc #-}
     assoc :: forall b c.
        Proxy a -> Proxy b -> Proxy c ->
         ((a :++: (b :++: c)) :==: ((a :++: b) :++: c))
-    {-# INLINE rightIdent #-}
     rightIdent :: Proxy a ->
         (a :++: '[]) :==: a
 
