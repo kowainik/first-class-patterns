@@ -45,7 +45,8 @@ Extensions:          TypeFamilies,
                      EmptyDataDecls, 
                      Rank2Types, 
                      GeneralizedNewtypeDeriving, 
-                     FlexibleInstances
+                     FlexibleInstances,
+                     PolyKinds
 
 -- necessary to get all the patterns properly inlined. Note that putting
 -- {-# INLINE #-} pragmas every doesn't seem to work, due to some subtlety

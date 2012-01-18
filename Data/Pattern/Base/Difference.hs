@@ -25,19 +25,19 @@ import Unsafe.Coerce
 -- an efficient append operation.
 class Difference d where
     -- | constructs the empty @d t@.
-    zeroD :: d t Nil
+    zeroD :: d t '[]
     -- | appends two @d t@s.
     plusD :: d t xs -> d t ys -> d t (xs :++: ys)
     -- | given a \"cons\" operation, constructs the singleton @d t@.
-    mkOneD :: (forall ys. t ys -> t (a :*: ys)) -> d t (a :*: Nil)
+    mkOneD :: (forall ys. t ys -> t (a ': ys)) -> d t '[a]
     -- | given a \"nil\" value, \"runs\" the @d t@.
-    evalD :: t Nil -> d t xs -> t xs
+    evalD :: t '[] -> d t xs -> t xs
 
 newtype D t xs = D (CoerceD t xs) deriving(Difference)
 
 ----- GADT implementation (pure (no cheating), recursive) -------------
 data Proxy a
-proxy :: Proxy a
+proxy :: forall (a :: [*]). Proxy a
 proxy = undefined
 
 data GadtD t xs = List xs => GadtD (forall ys. t ys -> t (xs :++: ys))
@@ -69,9 +69,9 @@ class List a where
         ((a :++: (b :++: c)) :==: ((a :++: b) :++: c))
     {-# INLINE rightIdent #-}
     rightIdent :: Proxy a ->
-        (a :++: Nil) :==: a
+        (a :++: '[]) :==: a
 
-instance List Nil where
+instance List '[] where
     {-# INLINE closure #-}
     closure _ _  = ListD
     {-# INLINE assoc #-}
@@ -79,7 +79,7 @@ instance List Nil where
     {-# INLINE rightIdent #-}
     rightIdent _ = Equal
 
-instance List t => List (h :*: t) where
+instance List t => List (h ': t) where
     {-# INLINE closure #-}
     closure _ b  = case closure (proxy :: Proxy t) b of
                      ListD -> ListD
@@ -91,7 +91,7 @@ instance List t => List (h :*: t) where
                      Equal -> Equal
 
 data a :==: b where
-    Equal :: a :==: a
+    Equal :: forall (a :: [*]). a :==: a
 data ListD a where
     ListD :: List a => ListD a
 
@@ -113,6 +113,6 @@ instance Difference CoerceD where
 assoc2 :: Proxy a -> Proxy b -> Proxy c -> (a :++: (b :++: c)) :==: ((a :++: b) :++: c)
 assoc2 _ _ _ = unsafeCoerce Equal
 
-rightIdent2 :: Proxy a -> (a :++: Nil) :==: a
+rightIdent2 :: Proxy a -> (a :++: '[]) :==: a
 rightIdent2 _ = unsafeCoerce Equal
 

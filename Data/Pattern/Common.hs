@@ -64,23 +64,23 @@ import Data.Maybe
 -- XXX todo: add examples of each combinator!
 
 -- | Variable pattern: always succeeds, and binds the value to a variable.
-var :: Pattern (a :*: Nil) a
+var :: Pattern '[a] a
 var = Pattern (Just . oneT)
 
 -- | @give b@ always succeeds, ignoring the matched value and
 --   providing the value @b@ instead.  Useful in conjunction with
 --   @('/\')@ for providing default values in cases that would otherwise
 --   not bind any values.
-give :: b -> Pattern (b :*: Nil) a
+give :: b -> Pattern '[b] a
 give b = Pattern (const (Just $ oneT b))
 
 -- | Wildcard pattern: always succeeds, binding no variables. (This is
 --   written as two underscores.)
-__ :: Pattern Nil a
+__ :: Pattern '[] a
 __ = is (const True)
 
 -- | Failure pattern: never succeeds.
-pfail :: Pattern Nil a
+pfail :: Pattern '[] a
 pfail = is (const False)
 
 -- | Predicate pattern. Succeeds if the given predicate yields 'True',
@@ -95,13 +95,13 @@ pfail = is (const False)
 --
 -- Note that 'is' is like 'mk0' but with 'Bool' instead of @'Maybe'
 -- ()@.
-is :: (a -> Bool) -> Pattern Nil a
+is :: (a -> Bool) -> Pattern '[] a
 is g = mk0 (\a -> if g a then Just () else Nothing)
 
 -- | Constant pattern: test for equality to the given constant.
 --
 --   @cst x = is (==x)@.
-cst :: (Eq a) => a -> Pattern Nil a
+cst :: (Eq a) => a -> Pattern '[] a
 cst x = is (==x)
 
 -- | Conjunctive (and) pattern: matches a value against two patterns,
@@ -143,7 +143,7 @@ infix 5 -?>
 ------------------------------------------------------------
 -- Computational patterns
 
--- XXX use (Tup vs :*: Nil) or something like that instead of (Map [] vs)?
+-- XXX use (Tup vs ': '[]) or something like that instead of (Map [] vs)?
 
 -- | @pfilter p@ matches every element of a 'F.Foldable' data structure
 --   against the pattern @p@, discarding elements that do not match.
@@ -183,7 +183,7 @@ pmap (Pattern p) = Pattern $ fmap distribute . T.traverse p
 --   to be able to process the bindings from each match together,
 --   rather than having to deal with them once they are separated out
 --   into separate lists.
-pfoldr :: (F.Foldable t, Functor t) => Pattern vs a -> (Fun vs (b -> b)) -> b -> Pattern (b :*: Nil) (t a)
+pfoldr :: (F.Foldable t, Functor t) => Pattern vs a -> (Fun vs (b -> b)) -> b -> Pattern '[b] (t a)
 pfoldr (Pattern p) f b = Pattern $ Just . oneT . foldr (flip runTuple f) b . catMaybes . F.toList . fmap p
 
 
@@ -226,11 +226,11 @@ elim = flip match
 -- Boolean patterns
 
 -- | Match @True@.
-true :: Pattern Nil Bool
+true :: Pattern '[] Bool
 true = is id
 
 -- | Match @False@.
-false :: Pattern Nil Bool
+false :: Pattern '[] Bool
 false = is not   -- is too!
 
 
@@ -243,7 +243,7 @@ false = is not   -- is too!
 -- are Doing It Wrong.
 
 -- | A strict match on the unit value @()@.
-unit :: Pattern Nil ()
+unit :: Pattern '[] ()
 unit = mk0 (\() -> Just ())
 
 -- | Construct a pattern match against a pair from a pair of patterns.
@@ -282,7 +282,7 @@ tup5 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) (Pattern pe) =
 -- Maybe
 
 -- | Match the 'Nothing' constructor of 'Maybe'.
-nothing :: Pattern Nil (Maybe a)
+nothing :: Pattern '[] (Maybe a)
 nothing = is isNothing
 
 -- | Match the 'Just' constructor of 'Maybe'.
@@ -306,7 +306,7 @@ right = mk1 (either (const Nothing) Just)
 -- Lists
 
 -- | Match the empty list.
-nil :: Pattern Nil [a]
+nil :: Pattern '[] [a]
 nil = is null
 
 -- | Match a cons.
@@ -318,7 +318,7 @@ cons = mk2 (\l -> case l of { (x:xs) -> Just (x,xs); _ -> Nothing })
 -- Numerics
 
 -- | Match zero.
-zero :: (Integral a, Eq a) => Pattern Nil a
+zero :: (Integral a, Eq a) => Pattern '[] a
 zero = cst 0
 
 -- | Match a natural number which is the successor of another natural
@@ -342,7 +342,7 @@ succtwice = mk1 (\n -> if odd n then Just (n `div` 2) else Nothing)
 ------------------------------------------------------------
 -- Constructing patterns
 
-mk0 :: (a -> Maybe ()) -> Pattern Nil a
+mk0 :: (a -> Maybe ()) -> Pattern '[] a
 mk0 g = Pattern (fmap (const zeroT) . g)
 
 mk1 :: (a -> Maybe b) -> Pattern vs b -> Pattern vs a
@@ -383,8 +383,8 @@ mk5 g b c d e f = mk1 g (tup5 b c d e f)
 -- XXX de Bruijn references for nonlinear patterns?
 {-
 data Ref :: * -> * -> *
-  RZero :: Ref (h :*: t) h
-  RSucc :: Ref t a -> Ref (h :*: t) a
+  RZero :: Ref (h ': t) h
+  RSucc :: Ref t a -> Ref (h ': t) a
 
 -- Can't implement this with the current definition of Pattern --
 -- there is no way to access previously matched values.  Plus the type
@@ -394,6 +394,6 @@ data Ref :: * -> * -> *
 --
 -- Essentially what it boils down to is that this pattern is rather
 -- non-compositional. =(
-ref :: Ref xs a -> Pattern Nil a
+ref :: Ref xs a -> Pattern '[] a
 ref = undefined
 -}
