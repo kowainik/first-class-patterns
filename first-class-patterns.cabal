@@ -29,28 +29,31 @@ Description:
 Cabal-Version:       >= 1.2.3
 Category:            Data
 Build-Type:          Simple
-Build-Depends:       base >= 3 && < 5, transformers >= 0.1.0 && < 0.2.3
-Stability:           experimental
-Tested-with:         GHC==6.10.3, GHC==7.0.1
-Exposed-modules:     Data.Pattern
-                     Data.Pattern.Base
-                     Data.Pattern.Base.TypeList
-                     Data.Pattern.Base.Tuple
-                     Data.Pattern.Common
-Other-modules:       Data.Pattern.Base.Difference
-Extensions:          TypeFamilies, 
-                     GADTs, 
-                     ScopedTypeVariables, 
-                     TypeOperators, 
-                     EmptyDataDecls, 
-                     Rank2Types, 
-                     GeneralizedNewtypeDeriving, 
-                     FlexibleInstances,
-                     PolyKinds
 
--- necessary to get all the patterns properly inlined. Note that putting
--- {-# INLINE #-} pragmas every doesn't seem to work, due to some subtlety
--- of the inliner.
-ghc-options:         
+library
+  Build-Depends:       base >= 3 && < 5, transformers >= 0.1.0 && < 0.2.3
+  Stability:           experimental
+  Tested-with:         GHC==6.10.3, GHC==7.0.1
+  Exposed-modules:     Data.Pattern
+                       Data.Pattern.Base
+                       Data.Pattern.Base.TypeList
+                       Data.Pattern.Base.Tuple
+                       Data.Pattern.Common
+  Other-modules:       Data.Pattern.Base.Difference
+  Extensions:          TypeFamilies, 
+                       GADTs, 
+                       ScopedTypeVariables, 
+                       TypeOperators, 
+                       EmptyDataDecls, 
+                       Rank2Types, 
+                       GeneralizedNewtypeDeriving, 
+                       FlexibleInstances,
+                       PolyKinds,
+                       DataKinds
+
+  -- necessary to get all the patterns properly inlined. Note that putting
+  -- {-# INLINE #-} pragmas every doesn't seem to work, due to some subtlety
+  -- of the inliner.
+  ghc-options:         
                      -funfolding-use-threshold=1000
                      -funfolding-creation-threshold=1000
