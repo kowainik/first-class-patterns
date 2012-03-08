@@ -26,14 +26,19 @@ Description:
 	If you're just reading the documentation for this library for
 	the first time, start with "Data.Pattern".
 
-Cabal-Version:       >= 1.2.3
+Cabal-Version:       >= 1.6
 Category:            Data
 Build-Type:          Simple
+Stability:           experimental
+homepage:            https://github.com/reinerp/first-class-patterns
+bug-reports:         https://github.com/reinerp/first-class-patterns/issues
+
+source-repository head
+  type:                 git
+  location:             git://github.com/reinerp/first-class-patterns.git
 
 library
-  Build-Depends:       base >= 3 && < 5, transformers >= 0.1.0 && < 0.2.3
-  Stability:           experimental
-  Tested-with:         GHC==6.10.3, GHC==7.0.1
+  Build-Depends:       base >= 4.5 && < 5, transformers >= 0.1.0 && < 0.2.3
   Exposed-modules:     Data.Pattern
                        Data.Pattern.Base
                        Data.Pattern.Base.TypeList
@@ -47,9 +52,7 @@ library
                        EmptyDataDecls, 
                        Rank2Types, 
                        GeneralizedNewtypeDeriving, 
-                       FlexibleInstances,
-                       PolyKinds,
-                       DataKinds
+                       FlexibleInstances
 
   -- necessary to get all the patterns properly inlined. Note that putting
   -- {-# INLINE #-} pragmas every doesn't seem to work, due to some subtlety

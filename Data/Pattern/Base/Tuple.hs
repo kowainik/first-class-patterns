@@ -10,6 +10,7 @@
 -- on type-lists.
 -----------------------------------------------------------------------------
 
+{-# LANGUAGE PolyKinds, DataKinds #-}
 module Data.Pattern.Base.Tuple (
   -- * Functions
   Fun,

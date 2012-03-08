@@ -10,6 +10,7 @@
 -- 'Pattern' and 'Clause'.
 -----------------------------------------------------------------------------
 
+{-# LANGUAGE PolyKinds, DataKinds #-}
 module Data.Pattern.Base (
   -- * Patterns
   Pattern(..),

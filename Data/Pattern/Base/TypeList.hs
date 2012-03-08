@@ -10,6 +10,7 @@
 -- no data. That is, they are phantom types.
 -----------------------------------------------------------------------------
 
+{-# LANGUAGE PolyKinds, DataKinds #-}
 module Data.Pattern.Base.TypeList where
 
 infixr :++:

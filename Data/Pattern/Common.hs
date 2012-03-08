@@ -9,6 +9,7 @@
 -- A collection of useful pattern combinators.
 -----------------------------------------------------------------------------
 
+{-# LANGUAGE PolyKinds, DataKinds #-}
 module Data.Pattern.Common (
 
   -- * Pattern combinators

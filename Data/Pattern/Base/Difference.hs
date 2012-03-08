@@ -9,7 +9,7 @@
 -- \"Difference list converters\". Developed in <http://reinerp.wordpress.com/2009/07/18/difference-type-list/>
 -----------------------------------------------------------------------------
 
-
+{-# LANGUAGE PolyKinds, DataKinds #-}
 module Data.Pattern.Base.Difference (
   Difference(..),
   D,
