@@ -1,15 +1,16 @@
+{-# LANGUAGE DataKinds #-}
 module Examples where
 
-import Control.Applicative
+import           Control.Applicative
 
-import Data.Pattern
+import           Data.Pattern
 
 --- Basic pattern matching syntax
 ex1, ex2 :: Either Int (Int, Int) -> Int
 ex1 a = match a $
           left (cst 4)         ->> 0
       <|> left var             ->> id
-      <|> right (tup2 var var) ->> (+)
+      <|> right (pair var var) ->> (+)
 
 ex2 a = case a of
           Left 4      -> 0
@@ -18,13 +19,15 @@ ex2 a = case a of
 
 -- Defining your own pattern matchers.
 data Foo = Foo1 Int Int Int Int Int | Foo2 Int
+type PInt as = Pattern as Int
 
-foo1 :: Pat5 Int Int Int Int Int Foo
+foo1 :: PInt as -> PInt bs -> PInt cs -> PInt ds -> PInt es
+     -> Pattern (as :++: bs :++: cs :++: ds :++: es) Foo
 foo1 = mk5 (\x -> case x of
                     Foo1 a b c d e -> Just (a,b,c,d,e)
                     _              -> Nothing)
 
-foo2 :: Pat1 Int Foo
+foo2 :: PInt as -> Pattern as Foo
 foo2 = mk1 (\x -> case x of
                     Foo2 a -> Just a
                     _      -> Nothing)
@@ -40,9 +43,9 @@ ex3 a = match a $
 -- Functor:   apply a function to multiple cases, using (<$>).
 ex4 :: Either (Int,Int) Int -> Int
 ex4 a = match a $
-           (1+) <$> (left (tup2 var (cst 4)) ->> id
+           (1+) <$> (left (pair var (cst 4)) ->> id
                  <|> right var               ->> id)
-       <|> left (tup2 __ var) ->> id
+       <|> left (pair __ var) ->> id
 
 --ex4' :: Either (Int,Int) Int -> Int
 --ex4' a = match a $
@@ -51,7 +54,7 @@ ex4 a = match a $
 -- Applicative:  do 2 pattern matches on the same data, and combine them with function application. (<*>).
 ex5 :: (Int,Int) -> Int
 ex5 a = match a $
-            (tup2 (cst 4) __ ->> (3*) <|> tup2 var __ ->> (*)) <*> (tup2 __ var ->> id)
+            (pair (cst 4) __ ->> (3*) <|> pair var __ ->> (*)) <*> (pair __ var ->> id)
 
 -- ex5 is semantically the same as ex5'.
 ex5' :: (Int,Int) -> Int
@@ -80,4 +83,5 @@ ex8 = mmatch getLine $
         cst "" ->> return ()
     <|> var       ->> putStrLn . ("You said " ++)
 
-ex9 = match 3 $ zero ->> "z" <|> suc (suc var) ->> show
+ex9 :: String
+ex9 = match (3 :: Integer) $ zero ->> "z" <|> suc (suc var) ->> show

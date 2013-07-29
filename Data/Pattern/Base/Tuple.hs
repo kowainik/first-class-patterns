@@ -92,7 +92,7 @@ tupleHead = fst . unconsTuple
 tupleTail :: (Uncurriable t, Tupable t) => Tuple (h ': t) -> Tuple t
 tupleTail = snd . unconsTuple
 
-type family Map (f :: * -> *) xs :: [*]
+type family Map (f :: * -> *) (xs :: [*]) :: [*]
 type instance Map f '[]      = '[]
 type instance Map f (h ': t) = f h ': Map f t
 
