@@ -30,7 +30,7 @@ module Data.Pattern.Common (
   true, false,
   -- ** Tuples
   -- $tuples
-  unit, pair, tup3, tup4, tup5,
+  unit, tup0, pair, tup2, tup3, tup4, tup5,
   -- ** @Maybe@
   nothing, just,
   -- ** @Either@
@@ -247,9 +247,17 @@ false = is not   -- is too!
 unit :: Pattern '[] ()
 unit = mk0 (\() -> Just ())
 
+-- | A synonym for 'unit'.
+tup0 :: Pattern '[] ()
+tup0 = unit
+
 -- | Construct a pattern match against a pair from a pair of patterns.
 pair :: Pattern vs1 a -> Pattern vs2 b -> Pattern (vs1 :++: vs2) (a,b)
 pair (Pattern pa) (Pattern pb) = Pattern (\(a,b) -> (<>) <$> pa a <*> pb b)
+
+-- | A synonym for 'pair'.
+tup2 :: Pattern vs1 a -> Pattern vs2 b -> Pattern (vs1 :++: vs2) (a,b)
+tup2 = pair
 
 -- | Match a 3-tuple.
 tup3 :: Pattern vs1 a ->
