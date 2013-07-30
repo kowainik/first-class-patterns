@@ -150,9 +150,6 @@ infix 5 -?>
 --   against the pattern @p@, discarding elements that do not match.
 --   From the matching elements, binds a list of values corresponding
 --   to each pattern variable.
---
---   For example, XXX
---
 pfilter :: (Distribute vs, F.Foldable t) => Pattern vs a -> Pattern (Map [] vs) (t a)
 pfilter (Pattern p) = Pattern $ Just . distribute . catMaybes . map p . F.toList
 
@@ -161,8 +158,6 @@ pfilter (Pattern p) = Pattern $ Just . distribute . catMaybes . map p . F.toList
 --   of the elements fail to match @p@.  If all the elements match,
 --   binds a @t@-structure full of bound values corresponding to each
 --   variable bound in @p@.
---
---   For example, XXX
 pmap :: (Distribute vs, T.Traversable t) => Pattern vs a -> Pattern (Map t vs) (t a)
 pmap (Pattern p) = Pattern $ fmap distribute . T.traverse p
 
@@ -170,8 +165,6 @@ pmap (Pattern p) = Pattern $ fmap distribute . T.traverse p
 --   structure against the pattern @p@, discarding elements that do
 --   not match.  Folds over the bindings produced by the matching
 --   elements to produce a summary value.
---
---   For example,
 --
 --   The same functionality could be achieved by matching with
 --   @pfilter p@ and then appropriately combining and folding the
