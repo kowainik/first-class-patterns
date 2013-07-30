@@ -26,7 +26,7 @@ Description:
 	If you're just reading the documentation for this library for
 	the first time, start with "Data.Pattern".
 
-Cabal-Version:       >= 1.6
+Cabal-Version:       >= 1.10
 Category:            Data
 Build-Type:          Simple
 Stability:           experimental
@@ -47,18 +47,19 @@ library
                        Data.Pattern.Base.Tuple
                        Data.Pattern.Common
   Other-modules:       Data.Pattern.Base.Difference
-  Extensions:          TypeFamilies, 
-                       GADTs, 
-                       ScopedTypeVariables, 
-                       TypeOperators, 
-                       EmptyDataDecls, 
-                       Rank2Types, 
-                       GeneralizedNewtypeDeriving, 
+  Default-extensions:  TypeFamilies,
+                       GADTs,
+                       ScopedTypeVariables,
+                       TypeOperators,
+                       EmptyDataDecls,
+                       Rank2Types,
+                       GeneralizedNewtypeDeriving,
                        FlexibleInstances
+  Default-language:    Haskell2010
 
   -- necessary to get all the patterns properly inlined. Note that putting
   -- {-# INLINE #-} pragmas every doesn't seem to work, due to some subtlety
   -- of the inliner.
-  ghc-options:         
+  ghc-options:
                      -funfolding-use-threshold=1000
                      -funfolding-creation-threshold=1000
