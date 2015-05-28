@@ -9,7 +9,7 @@
 -- \"Difference list converters\". Developed in <http://reinerp.wordpress.com/2009/07/18/difference-type-list/>
 -----------------------------------------------------------------------------
 
-{-# LANGUAGE PolyKinds, DataKinds #-}
+{-# LANGUAGE PolyKinds, DataKinds, FlexibleContexts, UndecidableInstances #-}
 module Data.Pattern.Base.Difference (
   Difference(..),
   D,
@@ -33,7 +33,15 @@ class Difference d where
     -- | given a \"nil\" value, \"runs\" the @d t@.
     evalD :: t '[] -> d t xs -> t xs
 
-newtype D t xs = D (CoerceD t xs) deriving(Difference)
+newtype D t xs = D (CoerceD t xs)
+
+-- Make a Difference instance explicitly, instead of using GND,
+-- to work around some sort of bug (?)
+instance Difference CoerceD => Difference D where
+  zeroD = D zeroD
+  plusD (D xs) (D ys) = D (plusD xs ys)
+  mkOneD f = D (mkOneD f)
+  evalD t (D xs) = evalD t xs
 
 ----- GADT implementation (pure (no cheating), recursive) -------------
 data Proxy a
