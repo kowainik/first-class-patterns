@@ -1,3 +1,8 @@
+0.3.2.2 (28 May 2015)
+---------------------
+
+* Bug fix: [#3](https://github.com/reinerp/first-class-patterns/issues/3)
+
 0.3.2.1: 12 May, 2014
 ---------------------
 
