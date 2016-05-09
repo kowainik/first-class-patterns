@@ -40,7 +40,7 @@ source-repository head
 library
   Build-Depends:
     base >= 4.5 && < 5,
-    transformers >= 0.1.0 && < 0.5
+    transformers >= 0.1.0 && < 0.6
   Exposed-modules:     Data.Pattern
                        Data.Pattern.Base
                        Data.Pattern.Base.TypeList
