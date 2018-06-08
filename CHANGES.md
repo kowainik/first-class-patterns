@@ -1,3 +1,10 @@
+0.3.2.4
+=======
+
+* [#1](https://github.com/kowainik/first-class-patterns/issues/1):
+  Add `stack` support.
+* Update maintainer information.
+
 0.3.2.3 (9 May 2016)
 --------------------
 
