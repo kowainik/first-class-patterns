@@ -47,15 +47,17 @@ library
                        Data.Pattern.Base.Tuple
                        Data.Pattern.Common
   Other-modules:       Data.Pattern.Base.Difference
-  Default-extensions:  TypeFamilies
-                       GADTs
-                       ScopedTypeVariables
-                       TypeOperators
-                       EmptyDataDecls
-                       Rank2Types
-                       GeneralizedNewtypeDeriving
+
+  default-extensions:  EmptyDataDecls
                        FlexibleInstances
-  Default-language:    Haskell2010
+                       GeneralizedNewtypeDeriving
+                       GADTs
+                       Rank2Types
+                       ScopedTypeVariables
+                       TypeFamilies
+                       TypeOperators
+
+  default-language:    Haskell2010
 
   -- necessary to get all the patterns properly inlined. Note that putting
   -- {-# INLINE #-} pragmas every doesn't seem to work, due to some subtlety
