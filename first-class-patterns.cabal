@@ -27,13 +27,15 @@ Description:
   the first time, start with "Data.Pattern".
 
 Cabal-Version:       2.0
-Category:            Data
+Category:            Data, Pattern
 Build-Type:          Simple
 Stability:           experimental
 homepage:            https://github.com/kowainik/first-class-patterns
 bug-reports:         https://github.com/kowainik/first-class-patterns/issues
 tested-with:         GHC == 8.2.2
                    , GHC == 8.4.3
+extra-doc-files:     README.md
+                   , CHANGES.md
 
 source-repository head
   type:                 git
