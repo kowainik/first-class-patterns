@@ -22,7 +22,7 @@ Description:
   matches of this library are lightweight: when GHC's
   optimisation is turned on, all overhead should be optimised
   away, leaving a standard Haskell pattern match.
-        .
+  .
   If you're just reading the documentation for this library for
   the first time, start with "Data.Pattern".
 
@@ -32,6 +32,8 @@ Build-Type:          Simple
 Stability:           experimental
 homepage:            https://github.com/kowainik/first-class-patterns
 bug-reports:         https://github.com/kowainik/first-class-patterns/issues
+tested-with:         GHC == 8.2.2
+                   , GHC == 8.4.3
 
 source-repository head
   type:                 git
