@@ -41,3 +41,6 @@ install:
 
 script:
   - travis_wait 40 stack build --test --no-terminal
+  
+notifications:
+  email: false
