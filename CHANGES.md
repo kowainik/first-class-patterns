@@ -1,9 +1,11 @@
 0.3.2.4
 =======
 
+* Update maintainer information.
 * [#1](https://github.com/kowainik/first-class-patterns/issues/1):
   Add `stack` support.
-* Update maintainer information.
+* [#3](https://github.com/kowainik/first-class-patterns/issues/3):
+  Add Travis CI support. Build with GHC-8.2.2 and GHC-8.4.3.
 
 0.3.2.3 (9 May 2016)
 --------------------

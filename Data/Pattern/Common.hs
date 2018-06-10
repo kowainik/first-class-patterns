@@ -9,7 +9,8 @@
 -- A collection of useful pattern combinators.
 -----------------------------------------------------------------------------
 
-{-# LANGUAGE PolyKinds, DataKinds #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE PolyKinds #-}
 module Data.Pattern.Common (
 
   -- * Pattern combinators
@@ -246,7 +247,7 @@ tup0 = unit
 
 -- | Construct a pattern match against a pair from a pair of patterns.
 pair :: Pattern vs1 a -> Pattern vs2 b -> Pattern (vs1 :++: vs2) (a,b)
-pair (Pattern pa) (Pattern pb) = Pattern (\(a,b) -> (<>) <$> pa a <*> pb b)
+pair (Pattern pa) (Pattern pb) = Pattern (\(a,b) -> (<+>) <$> pa a <*> pb b)
 
 -- | A synonym for 'pair'.
 tup2 :: Pattern vs1 a -> Pattern vs2 b -> Pattern (vs1 :++: vs2) (a,b)
@@ -258,7 +259,7 @@ tup3 :: Pattern vs1 a ->
         Pattern vs3 c ->
         Pattern (vs1 :++: vs2 :++: vs3) (a,b,c)
 tup3 (Pattern pa) (Pattern pb) (Pattern pc) =
-   Pattern (\(a,b,c) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> pc c))
+   Pattern (\(a,b,c) -> (<+>) <$> pa a <*> ((<+>) <$> pb b <*> pc c))
 
 -- | Match a 4-tuple.
 tup4 :: Pattern vs1 a ->
@@ -267,7 +268,7 @@ tup4 :: Pattern vs1 a ->
         Pattern vs4 d ->
         Pattern (vs1 :++: vs2 :++: vs3 :++: vs4) (a,b,c,d)
 tup4 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) =
-   Pattern (\(a,b,c,d) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> ((<>) <$> pc c <*> pd d)))
+   Pattern (\(a,b,c,d) -> (<+>) <$> pa a <*> ((<+>) <$> pb b <*> ((<+>) <$> pc c <*> pd d)))
 
 -- | Match a 5-tuple.
 tup5 :: Pattern vs1 a ->
@@ -277,7 +278,7 @@ tup5 :: Pattern vs1 a ->
         Pattern vs5 e ->
         Pattern (vs1 :++: vs2 :++: vs3 :++: vs4 :++: vs5) (a,b,c,d,e)
 tup5 (Pattern pa) (Pattern pb) (Pattern pc) (Pattern pd) (Pattern pe) =
-   Pattern (\(a,b,c,d,e) -> (<>) <$> pa a <*> ((<>) <$> pb b <*> ((<>) <$> pc c <*> ((<>) <$> pd d <*> pe e))))
+   Pattern (\(a,b,c,d,e) -> (<+>) <$> pa a <*> ((<+>) <$> pb b <*> ((<+>) <$> pc c <*> ((<+>) <$> pd d <*> pe e))))
 
 
 ------------------------------------------------------------

@@ -10,7 +10,8 @@
 -- on type-lists.
 -----------------------------------------------------------------------------
 
-{-# LANGUAGE PolyKinds, DataKinds #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE PolyKinds #-}
 module Data.Pattern.Base.Tuple (
   -- * Functions
   Fun,
@@ -18,14 +19,14 @@ module Data.Pattern.Base.Tuple (
   Tuple,
   zeroT,
   oneT,
-  (<>),
+  (<+>),
   runTuple,
   -- * Mapping and distributing over tuples
   Map, Distribute(..)
  ) where
 
-import Data.Pattern.Base.TypeList
 import Data.Pattern.Base.Difference
+import Data.Pattern.Base.TypeList
 
 -- | Curried functions. We have
 --
@@ -68,11 +69,11 @@ instance Tupable '[] where
   mkTuple Unit = zeroT
 
 instance Tupable t => Tupable (h ': t) where
-  mkTuple (Pair h t) = oneT h <> mkTuple t
+  mkTuple (Pair h t) = oneT h <+> mkTuple t
 
 -- | Concatenation of tuples.
-(<>) :: Tuple xs -> Tuple ys -> Tuple (xs :++: ys)
-(Tuple xs) <> (Tuple ys) = Tuple (xs `plusD` ys)
+(<+>) :: Tuple xs -> Tuple ys -> Tuple (xs :++: ys)
+Tuple xs <+> Tuple ys = Tuple (xs `plusD` ys)
 
 -- | Runs a tuple by applying it to a curried function.
 runTuple :: Tuple xs -> Fun xs r -> r
@@ -104,4 +105,4 @@ instance Distribute '[] where
 
 instance (Uncurriable t, Tupable t, Distribute t) => Distribute (h ': t) where
 --  distribute :: f (Tuple (h :*: t)) -> Tuple (f h :*: Map f t)
-  distribute f = oneT (fmap tupleHead f) <> distribute (fmap tupleTail f)
+  distribute f = oneT (fmap tupleHead f) <+> distribute (fmap tupleTail f)
