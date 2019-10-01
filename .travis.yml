@@ -18,6 +18,9 @@ matrix:
   - ghc: 8.4.3
     env: GHCVER='8.4.3' STACK_YAML="$HOME/build/kowainik/first-class-patterns/stack-$GHCVER.yaml"
 
+  - ghc: 8.8.1
+    env: GHCVER='8.8.1' STACK_YAML="$HOME/build/kowainik/first-class-patterns/stack-$GHCVER.yaml"
+
 addons:
   apt:
     sources:
