@@ -1,4 +1,3 @@
------------------------------------------------------------------------------
 -- |
 -- Module:      Data.Pattern.TypeList.Difference
 -- License:     BSD3
@@ -16,8 +15,9 @@ module Data.Pattern.Base.Difference (
  ) where
 
 import Data.Pattern.Base.TypeList
-
+import Data.Kind (Type)
 import Unsafe.Coerce
+
 
 -- | The API presented by @Data.Pattern.Base.Difference.GADT@ and
 -- @Data.Pattern.Base.Difference.Coerce@. An instance of 'Difference' is a
@@ -45,7 +45,7 @@ instance Difference CoerceD => Difference D where
 
 ----- GADT implementation (pure (no cheating), recursive) -------------
 data Proxy a
-proxy :: forall (a :: [*]). Proxy a
+proxy :: forall (a :: [Type]). Proxy a
 proxy = undefined
 
 data GadtD t xs = List xs => GadtD (forall ys. t ys -> t (xs :++: ys))
@@ -96,7 +96,7 @@ instance List t => List (h ': t) where
                      Equal -> Equal
 
 data a :==: b where
-    Equal :: forall (a :: [*]). a :==: a
+    Equal :: forall (a :: [Type]). a :==: a
 data ListD a where
     ListD :: List a => ListD a
 

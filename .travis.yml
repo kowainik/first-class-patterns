@@ -4,46 +4,50 @@ language: haskell
 git:
   depth: 5
 
+cabal: "3.0"
+
 cache:
   directories:
+  - "$HOME/.cabal/store"
   - "$HOME/.stack"
-  - "$HOME/build/kowainik/first-class-patterns/.stack-work"
+  - "$TRAVIS_BUILD_DIR/.stack-work"
 
 matrix:
   include:
 
+  # cabal
   - ghc: 8.2.2
-    env: GHCVER='8.2.2' STACK_YAML="$HOME/build/kowainik/first-class-patterns/stack.yaml"
-
-  - ghc: 8.4.3
-    env: GHCVER='8.4.3' STACK_YAML="$HOME/build/kowainik/first-class-patterns/stack-$GHCVER.yaml"
-
+  - ghc: 8.4.4
+  - ghc: 8.6.5
   - ghc: 8.8.1
-    env: GHCVER='8.8.1' STACK_YAML="$HOME/build/kowainik/first-class-patterns/stack-$GHCVER.yaml"
 
-addons:
-  apt:
-    sources:
-      - sourceline: 'ppa:hvr/ghc'
-    packages:
-      - libgmp-dev
-
-before_install:
-  - mkdir -p ~/.local/bin
-  - export PATH="$HOME/.local/bin:$PATH"
-  - travis_retry curl -L 'https://www.stackage.org/stack/linux-x86_64' | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-  - stack --version
-
+  # stack
+  - ghc: 8.8.1
+    env: STACK_YAML="$TRAVIS_BUILD_DIR/stack.yaml"
 
 install:
-  - travis_wait 30 stack setup --no-terminal
-  - stack ghc -- --version
+  - |
+    if [ -z "$STACK_YAML" ]; then
+      ghc --version
+      cabal --version
+      cabal update
+      cabal build --enable-tests --enable-benchmarks
+    else
+      # install stack
+      curl -sSL https://get.haskellstack.org/ | sh
 
-  - travis_wait 40 stack build --only-dependencies --no-terminal
-  - travis_wait 40 stack build --test --bench --haddock --no-run-tests --no-run-benchmarks --no-haddock-deps --no-terminal
+      # build project with stack
+      stack --version
+      stack build --system-ghc --test --no-run-tests
+    fi
 
 script:
-  - travis_wait 40 stack build --test --no-terminal
-  
+  - |
+    if [ -z "$STACK_YAML" ]; then
+      cabal test --enable-tests
+    else
+      stack test --no-terminal --system-ghc
+    fi
+
 notifications:
   email: false

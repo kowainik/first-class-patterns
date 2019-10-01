@@ -27,15 +27,16 @@ module Data.Pattern.Base.Tuple (
 
 import Data.Pattern.Base.Difference
 import Data.Pattern.Base.TypeList
+import Data.Kind (Type)
 
 -- | Curried functions. We have
 --
 -- @Fun '[x1, ..., xn] r   =   x1 -> ... -> xn -> r@
-type family   Fun (xs :: [*]) r
+type family   Fun (xs :: [Type]) r
 type instance Fun '[]      r = r
 type instance Fun (h ': t) r = h -> Fun t r
 
-data family   Tup (xs :: [*])
+data family   Tup (xs :: [Type])
 data instance Tup '[]      = Unit
 data instance Tup (h ': t) = Pair h (Tup t)
 
@@ -93,7 +94,7 @@ tupleHead = fst . unconsTuple
 tupleTail :: (Uncurriable t, Tupable t) => Tuple (h ': t) -> Tuple t
 tupleTail = snd . unconsTuple
 
-type family Map (f :: * -> *) (xs :: [*]) :: [*]
+type family Map (f :: Type -> Type) (xs :: [Type]) :: [Type]
 type instance Map f '[]      = '[]
 type instance Map f (h ': t) = f h ': Map f t
 
