@@ -66,7 +66,7 @@ newtype Clause a r = Clause { runClause :: ReaderT a Maybe r
                               -- 'tryMatch', 'mmatch', and 'elim' from
                               -- "Data.Pattern.Common".
                             }
-    deriving(Functor,Applicative,Monad,Alternative,MonadPlus)
+    deriving newtype (Functor,Applicative,Monad,Alternative,MonadPlus)
 
 -- (<|>) is infix 3, so we make (->>) infix 4.
 infix 4 ->>

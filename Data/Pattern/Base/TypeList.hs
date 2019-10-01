@@ -13,12 +13,14 @@
 {-# LANGUAGE PolyKinds, DataKinds #-}
 module Data.Pattern.Base.TypeList where
 
-infixr :++:
+import Data.Kind (Type)
+
 
 -- | Concatenation of lists. Instances:
 --
 -- > type instance Nil     :++: xs = xs
 -- > type instance (h:*:t) :++: xs = h :*: (t :++: xs)
-type family (:++:) (a :: [*]) (b :: [*]) :: [*]
+infixr :++:
+type family (:++:) (a :: [Type]) (b :: [Type]) :: [Type]
 type instance '[]      :++: xs = xs
 type instance (h ': t) :++: xs = h ': (t :++: xs)
