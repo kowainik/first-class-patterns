@@ -68,5 +68,6 @@ library
   -- of the inliner.
   -- TODO: test with recent ghc versions and check this
   ghc-options:
+                     -Wmissing-deriving-strategies
                      -funfolding-use-threshold=1000
                      -funfolding-creation-threshold=1000
